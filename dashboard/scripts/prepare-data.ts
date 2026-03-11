@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
 
 const ROOT = join(__dirname, "../..");
@@ -6,8 +6,19 @@ const OUT = join(__dirname, "../public/data");
 
 mkdirSync(OUT, { recursive: true });
 
+// Skip if source files don't exist (e.g. Vercel build where only dashboard/ is available)
+const tsvPath = join(ROOT, "autoresearch/results.tsv");
+if (!existsSync(tsvPath)) {
+  if (existsSync(join(OUT, "results.json"))) {
+    console.log("Source files not found but public/data/ already populated — skipping.");
+    process.exit(0);
+  }
+  console.error("ERROR: No source data and no pre-built data files.");
+  process.exit(1);
+}
+
 // 1. Parse results.tsv -> results.json (filter out "other" category)
-const tsv = readFileSync(join(ROOT, "autoresearch/results.tsv"), "utf-8");
+const tsv = readFileSync(tsvPath, "utf-8");
 const lines = tsv.trim().split("\n");
 const headers = lines[0].split("\t");
 const results = lines.slice(1).map((line) => {
