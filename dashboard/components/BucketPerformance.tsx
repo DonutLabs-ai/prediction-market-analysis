@@ -32,6 +32,11 @@ export default function BucketPerformance({
         </span>
       </div>
 
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-xs text-zinc-500">
+        <span className="text-zinc-400">Implied Prob</span> = market price (what the crowd believes) &middot;{" "}
+        <span className="text-zinc-400">Win Rate</span> = % that actually resolved YES &middot;{" "}
+        <span className="text-zinc-400">Edge</span> = |Win Rate - Implied Prob|, the mispricing the strategy exploits
+      </div>
       <div className="overflow-x-auto rounded-lg border border-zinc-800">
         <table className="w-full text-sm">
           <thead>

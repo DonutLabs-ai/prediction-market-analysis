@@ -115,16 +115,36 @@ export default function CalibrationCurve({
         </LineChart>
       </ResponsiveContainer>
 
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-400">
-        <p className="font-medium text-zinc-300">Key Insight: S-shaped Mispricing Holds Across All Time Periods</p>
-        <p className="mt-1">
-          Three independent time periods (train/test/validation) show the same pattern:
-          markets priced at 25% resolve YES ~1% of the time, while markets at 75% resolve
-          YES ~97% of the time. The consistency across {" "}
-          {buckets.reduce((s, b) => s + b.n_markets, 0).toLocaleString()} markets from
-          Jan 2023 to Jan 2027 confirms this is a durable structural feature, not a
-          time-dependent artifact.
-        </p>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-400">
+          <p className="font-medium text-zinc-300">Reading This Chart</p>
+          <p className="mt-1">
+            <span className="text-zinc-200">Perception (X-axis)</span> = the market price.
+            If a YES contract trades at $0.25, the market implies a 25% chance.
+            This is what the crowd believes.
+          </p>
+          <p className="mt-1">
+            <span className="text-zinc-200">Reality (Y-axis)</span> = the actual win rate.
+            Of all markets priced around 25%, how many actually resolved YES?
+            This is what actually happened.
+          </p>
+          <p className="mt-1">
+            The <span className="text-zinc-200">dashed diagonal</span> is perfect calibration &mdash;
+            where perception matches reality. Any gap between the curve and the diagonal is a mispricing
+            the strategy can exploit.
+          </p>
+        </div>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-400">
+          <p className="font-medium text-zinc-300">Key Insight: S-shaped Mispricing</p>
+          <p className="mt-1">
+            Three independent time periods (train/test/validation) show the same pattern:
+            markets priced at 25% resolve YES ~1% of the time, while markets at 75% resolve
+            YES ~97% of the time. The consistency across {" "}
+            {buckets.reduce((s, b) => s + b.n_markets, 0).toLocaleString()} markets from
+            Jan 2023 to Jan 2027 confirms this is a durable structural feature, not a
+            time-dependent artifact.
+          </p>
+        </div>
       </div>
     </div>
   );
