@@ -2,35 +2,47 @@
   "total_iterations": 50,
   "category_states": {
     "crypto": {
-      "num_buckets": 20,
+      "num_buckets": 10,
       "significance_level": 0.05,
-      "min_edge": 0.046,
-      "use_own_table": false,
-      "best_composite": 0.829205,
+      "min_edge": 0.0,
+      "use_own_table": true,
+      "w_brier": 0.3997,
+      "w_roi": 0.4288,
+      "w_bet_rate": 0.1715,
+      "best_composite": 0.83917,
       "experiments_run": 8
     },
     "politics": {
       "num_buckets": 20,
       "significance_level": 0.05,
-      "min_edge": 0.0111,
+      "min_edge": 0.0172,
       "use_own_table": false,
-      "best_composite": 0.775396,
+      "w_brier": 0.3,
+      "w_roi": 0.5,
+      "w_bet_rate": 0.2,
+      "best_composite": 0.779021,
       "experiments_run": 7
     },
     "finance": {
-      "num_buckets": 7,
+      "num_buckets": 10,
       "significance_level": 0.05,
       "min_edge": 0.0,
-      "use_own_table": false,
-      "best_composite": 0.75641,
+      "use_own_table": true,
+      "w_brier": 0.4527,
+      "w_roi": 0.3909,
+      "w_bet_rate": 0.1564,
+      "best_composite": 0.809227,
       "experiments_run": 7
     },
     "sports": {
-      "num_buckets": 7,
+      "num_buckets": 20,
       "significance_level": 0.05,
       "min_edge": 0.0,
       "use_own_table": false,
-      "best_composite": 0.755033,
+      "w_brier": 0.2535,
+      "w_roi": 0.4225,
+      "w_bet_rate": 0.3241,
+      "best_composite": 0.793101,
       "experiments_run": 7
     },
     "tech": {
@@ -38,34 +50,53 @@
       "significance_level": 0.05,
       "min_edge": 0.0,
       "use_own_table": false,
-      "best_composite": 0.752522,
+      "w_brier": 0.2693,
+      "w_roi": 0.3478,
+      "w_bet_rate": 0.3828,
+      "best_composite": 0.827754,
       "experiments_run": 7
     },
     "entertainment": {
-      "num_buckets": 7,
+      "num_buckets": 10,
       "significance_level": 0.05,
       "min_edge": 0.0,
       "use_own_table": false,
-      "best_composite": 0.754552,
+      "w_brier": 0.3,
+      "w_roi": 0.5,
+      "w_bet_rate": 0.2,
+      "best_composite": 0.754407,
       "experiments_run": 7
     },
     "other": {
       "num_buckets": 20,
       "significance_level": 0.05,
-      "min_edge": 0.0555,
+      "min_edge": 0.0,
       "use_own_table": true,
-      "best_composite": 0.814088,
+      "w_brier": 0.3721,
+      "w_roi": 0.4485,
+      "w_bet_rate": 0.1794,
+      "best_composite": 0.803843,
       "experiments_run": 7
     }
   },
+  "test": {
+    "composite": 0.795987,
+    "brier": 0.02846,
+    "bet_rate": 0.833639,
+    "total_pnl": 514085.32,
+    "total_cost": 2356814.68,
+    "roi": 0.2181,
+    "num_bets": 30011,
+    "num_wins": 28709
+  },
   "validation": {
-    "composite": 0.80185,
-    "brier": 0.02725,
-    "bet_rate": 0.587415,
-    "total_pnl": 387808.89,
-    "total_cost": 1615491.11,
-    "roi": 0.2401,
-    "num_bets": 21154,
-    "num_wins": 20033
+    "composite": 0.780007,
+    "brier": 0.027644,
+    "bet_rate": 0.871848,
+    "total_pnl": 400528.01,
+    "total_cost": 2614571.99,
+    "roi": 0.1532,
+    "num_bets": 31397,
+    "num_wins": 30151
   }
 }

@@ -56,3 +56,77 @@ iter	category	param	old	new	composite	delta	status	description
 48	entertainment	use_own_table	False	True	0.752061	-0.002491	discard	own_table F->T
 49	other	min_edge	0.0262	0.0555	0.814088	+0.001875	keep	min_edge 0.0262 -> 0.0555
 50	crypto	num_buckets	20	7	0.828244	-0.000961	discard	20 -> 7 buckets
+0	crypto	baseline	-	-	0.818452	+0.000000	keep	global 10-bucket baseline
+0	politics	baseline	-	-	0.760959	+0.000000	keep	global 10-bucket baseline
+0	finance	baseline	-	-	0.756337	+0.000000	keep	global 10-bucket baseline
+0	sports	baseline	-	-	0.755029	+0.000000	keep	global 10-bucket baseline
+0	tech	baseline	-	-	0.752522	+0.000000	keep	global 10-bucket baseline
+0	entertainment	baseline	-	-	0.754407	+0.000000	keep	global 10-bucket baseline
+0	other	baseline	-	-	0.781105	+0.000000	keep	global 10-bucket baseline
+1	crypto	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.2773, 'w_roi': 0.5378, 'w_bet_rate': 0.1849}	0.806376	-0.012076	discard	weights 0.30/0.50/0.20 -> 0.28/0.54/0.18
+2	politics	significance_level	0.05	0.01	0.760959	+0.000000	discard	sig 0.05 -> 0.01
+3	finance	significance_level	0.05	0.01	0.756337	+0.000000	discard	sig 0.05 -> 0.01
+4	sports	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.2509, 'w_roi': 0.5818, 'w_bet_rate': 0.1673}	0.714967	-0.040062	discard	weights 0.30/0.50/0.20 -> 0.25/0.58/0.17
+5	tech	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.2405, 'w_roi': 0.5425, 'w_bet_rate': 0.217}	0.731487	-0.021035	discard	weights 0.30/0.50/0.20 -> 0.24/0.54/0.22
+6	entertainment	significance_level	0.05	0.01	0.754407	+0.000000	discard	sig 0.05 -> 0.01
+7	other	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.3721, 'w_roi': 0.4485, 'w_bet_rate': 0.1794}	0.800571	+0.019466	keep	weights 0.30/0.50/0.20 -> 0.37/0.45/0.18
+8	crypto	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.2547, 'w_roi': 0.5755, 'w_bet_rate': 0.1698}	0.794330	-0.024122	discard	weights 0.30/0.50/0.20 -> 0.25/0.58/0.17
+9	politics	significance_level	0.05	0.1	0.760959	+0.000000	discard	sig 0.05 -> 0.1
+10	finance	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.3495, 'w_roi': 0.4647, 'w_bet_rate': 0.1859}	0.773478	+0.017141	keep	weights 0.30/0.50/0.20 -> 0.35/0.46/0.19
+0	crypto	baseline	-	-	0.818452	+0.000000	keep	global 10-bucket baseline
+0	politics	baseline	-	-	0.760959	+0.000000	keep	global 10-bucket baseline
+0	finance	baseline	-	-	0.756337	+0.000000	keep	global 10-bucket baseline
+0	sports	baseline	-	-	0.755029	+0.000000	keep	global 10-bucket baseline
+0	tech	baseline	-	-	0.752522	+0.000000	keep	global 10-bucket baseline
+0	entertainment	baseline	-	-	0.754407	+0.000000	keep	global 10-bucket baseline
+0	other	baseline	-	-	0.781105	+0.000000	keep	global 10-bucket baseline
+1	crypto	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.2773, 'w_roi': 0.5378, 'w_bet_rate': 0.1849}	0.806376	-0.012076	discard	weights 0.30/0.50/0.20 -> 0.28/0.54/0.18
+2	politics	significance_level	0.05	0.01	0.760959	+0.000000	discard	sig 0.05 -> 0.01
+3	finance	significance_level	0.05	0.01	0.756337	+0.000000	discard	sig 0.05 -> 0.01
+4	sports	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.2509, 'w_roi': 0.5818, 'w_bet_rate': 0.1673}	0.714967	-0.040062	discard	weights 0.30/0.50/0.20 -> 0.25/0.58/0.17
+5	tech	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.2405, 'w_roi': 0.5425, 'w_bet_rate': 0.217}	0.731487	-0.021035	discard	weights 0.30/0.50/0.20 -> 0.24/0.54/0.22
+6	entertainment	significance_level	0.05	0.01	0.754407	+0.000000	discard	sig 0.05 -> 0.01
+7	other	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.3721, 'w_roi': 0.4485, 'w_bet_rate': 0.1794}	0.800571	+0.019466	keep	weights 0.30/0.50/0.20 -> 0.37/0.45/0.18
+8	crypto	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.2547, 'w_roi': 0.5755, 'w_bet_rate': 0.1698}	0.794330	-0.024122	discard	weights 0.30/0.50/0.20 -> 0.25/0.58/0.17
+9	politics	significance_level	0.05	0.1	0.760959	+0.000000	discard	sig 0.05 -> 0.1
+10	finance	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.3495, 'w_roi': 0.4647, 'w_bet_rate': 0.1859}	0.773478	+0.017141	keep	weights 0.30/0.50/0.20 -> 0.35/0.46/0.19
+11	sports	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.2676, 'w_roi': 0.446, 'w_bet_rate': 0.2864}	0.781486	+0.026457	keep	weights 0.30/0.50/0.20 -> 0.27/0.45/0.29
+12	tech	min_edge	0.0	0.0119	0.605320	-0.147202	discard	min_edge 0.0000 -> 0.0119
+13	entertainment	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.3201, 'w_roi': 0.5335, 'w_bet_rate': 0.1464}	0.737952	-0.016455	discard	weights 0.30/0.50/0.20 -> 0.32/0.53/0.15
+14	other	num_buckets	10	20	0.800801	+0.000230	keep	10 -> 20 buckets
+15	crypto	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.3203, 'w_roi': 0.5338, 'w_bet_rate': 0.1459}	0.806179	-0.012273	discard	weights 0.30/0.50/0.20 -> 0.32/0.53/0.15
+16	politics	num_buckets	10	20	0.761021	+0.000062	keep	10 -> 20 buckets
+17	finance	weights	{'w_brier': 0.3495, 'w_roi': 0.4647, 'w_bet_rate': 0.1859}	{'w_brier': 0.3882, 'w_roi': 0.437, 'w_bet_rate': 0.1748}	0.786750	+0.013272	keep	weights 0.35/0.46/0.19 -> 0.39/0.44/0.17
+18	sports	num_buckets	10	20	0.781488	+0.000002	keep	10 -> 20 buckets
+19	tech	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.2722, 'w_roi': 0.4537, 'w_bet_rate': 0.274}	0.775338	+0.022816	keep	weights 0.30/0.50/0.20 -> 0.27/0.45/0.27
+20	entertainment	min_edge	0.0	0.0194	0.621941	-0.132466	discard	min_edge 0.0000 -> 0.0194
+21	other	num_buckets	20	7	0.800357	-0.000444	discard	20 -> 7 buckets
+22	crypto	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.3188, 'w_roi': 0.5314, 'w_bet_rate': 0.1497}	0.806953	-0.011499	discard	weights 0.30/0.50/0.20 -> 0.32/0.53/0.15
+23	politics	significance_level	0.05	0.01	0.761021	+0.000000	discard	sig 0.05 -> 0.01
+24	finance	use_own_table	False	True	0.786951	+0.000201	keep	own_table F->T
+25	sports	min_edge	0.0	0.0163	0.585918	-0.195570	discard	min_edge 0.0000 -> 0.0163
+26	tech	significance_level	0.05	0.1	0.775338	+0.000000	discard	sig 0.05 -> 0.1
+27	entertainment	min_edge	0.0	0.0102	0.638610	-0.115797	discard	min_edge 0.0000 -> 0.0102
+28	other	weights	{'w_brier': 0.3721, 'w_roi': 0.4485, 'w_bet_rate': 0.1794}	{'w_brier': 0.3213, 'w_roi': 0.5239, 'w_bet_rate': 0.1549}	0.770732	-0.030069	discard	weights 0.37/0.45/0.18 -> 0.32/0.52/0.15
+29	crypto	significance_level	0.05	0.01	0.818452	+0.000000	discard	sig 0.05 -> 0.01
+30	politics	significance_level	0.05	0.1	0.761021	+0.000000	discard	sig 0.05 -> 0.1
+31	finance	use_own_table	True	False	0.786750	-0.000201	discard	own_table T->F
+32	sports	min_edge	0.0	0.0297	0.571378	-0.210110	discard	min_edge 0.0000 -> 0.0297
+33	tech	weights	{'w_brier': 0.2722, 'w_roi': 0.4537, 'w_bet_rate': 0.274}	{'w_brier': 0.2268, 'w_roi': 0.4821, 'w_bet_rate': 0.2911}	0.761382	-0.013956	discard	weights 0.27/0.45/0.27 -> 0.23/0.48/0.29
+34	entertainment	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.3316, 'w_roi': 0.5527, 'w_bet_rate': 0.1157}	0.728521	-0.025886	discard	weights 0.30/0.50/0.20 -> 0.33/0.55/0.12
+35	other	num_buckets	20	10	0.800571	-0.000230	discard	20 -> 10 buckets
+36	crypto	use_own_table	False	True	0.818482	+0.000030	keep	own_table F->T
+37	politics	min_edge	0.0	0.0067	0.772346	+0.011325	keep	min_edge 0.0000 -> 0.0067
+38	finance	weights	{'w_brier': 0.3882, 'w_roi': 0.437, 'w_bet_rate': 0.1748}	{'w_brier': 0.2969, 'w_roi': 0.5022, 'w_bet_rate': 0.2009}	0.755446	-0.031505	discard	weights 0.39/0.44/0.17 -> 0.30/0.50/0.20
+39	sports	weights	{'w_brier': 0.2676, 'w_roi': 0.446, 'w_bet_rate': 0.2864}	{'w_brier': 0.2362, 'w_roi': 0.5109, 'w_bet_rate': 0.2528}	0.749601	-0.031887	discard	weights 0.27/0.45/0.29 -> 0.24/0.51/0.25
+40	tech	weights	{'w_brier': 0.2722, 'w_roi': 0.4537, 'w_bet_rate': 0.274}	{'w_brier': 0.3032, 'w_roi': 0.3916, 'w_bet_rate': 0.3052}	0.806175	+0.030837	keep	weights 0.27/0.45/0.27 -> 0.30/0.39/0.31
+41	entertainment	significance_level	0.05	0.1	0.754407	+0.000000	discard	sig 0.05 -> 0.1
+42	other	weights	{'w_brier': 0.3721, 'w_roi': 0.4485, 'w_bet_rate': 0.1794}	{'w_brier': 0.3242, 'w_roi': 0.5194, 'w_bet_rate': 0.1563}	0.772336	-0.028465	discard	weights 0.37/0.45/0.18 -> 0.32/0.52/0.16
+43	crypto	use_own_table	True	False	0.818452	-0.000030	discard	own_table T->F
+44	politics	min_edge	0.0067	0.0172	0.779021	+0.006675	keep	min_edge 0.0067 -> 0.0172
+45	finance	weights	{'w_brier': 0.3882, 'w_roi': 0.437, 'w_bet_rate': 0.1748}	{'w_brier': 0.4527, 'w_roi': 0.3909, 'w_bet_rate': 0.1564}	0.809227	+0.022276	keep	weights 0.39/0.44/0.17 -> 0.45/0.39/0.16
+46	sports	weights	{'w_brier': 0.2676, 'w_roi': 0.446, 'w_bet_rate': 0.2864}	{'w_brier': 0.2535, 'w_roi': 0.4225, 'w_bet_rate': 0.3241}	0.793101	+0.011613	keep	weights 0.27/0.45/0.29 -> 0.25/0.42/0.32
+47	tech	weights	{'w_brier': 0.3032, 'w_roi': 0.3916, 'w_bet_rate': 0.3052}	{'w_brier': 0.2693, 'w_roi': 0.3478, 'w_bet_rate': 0.3828}	0.827754	+0.021579	keep	weights 0.30/0.39/0.31 -> 0.27/0.35/0.38
+48	entertainment	use_own_table	False	True	0.751639	-0.002768	discard	own_table F->T
+49	other	use_own_table	False	True	0.803843	+0.003042	keep	own_table F->T
+50	crypto	weights	{'w_brier': 0.3, 'w_roi': 0.5, 'w_bet_rate': 0.2}	{'w_brier': 0.3997, 'w_roi': 0.4288, 'w_bet_rate': 0.1715}	0.839170	+0.020688	keep	weights 0.30/0.50/0.20 -> 0.40/0.43/0.17

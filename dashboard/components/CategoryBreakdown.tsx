@@ -33,7 +33,7 @@ export default function CategoryBreakdown({
     <div className="grid gap-8 lg:grid-cols-2">
       <div>
         <h4 className="mb-4 text-sm font-medium text-zinc-400">
-          Composite Score by Category
+          Betting Score by Category
         </h4>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data} layout="vertical">
@@ -47,7 +47,7 @@ export default function CategoryBreakdown({
             <YAxis type="category" dataKey="category" stroke="#888" width={100} />
             <Tooltip
               contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #333", borderRadius: "8px" }}
-              formatter={(value: any) => [Number(value).toFixed(4), "Composite"]}
+              formatter={(value: any) => [Number(value).toFixed(4), "Betting Score"]}
             />
             <Bar dataKey="composite" radius={[0, 4, 4, 0]}>
               {data.map((d) => (
@@ -67,9 +67,10 @@ export default function CategoryBreakdown({
             <thead>
               <tr className="border-b border-zinc-800 text-left text-zinc-400">
                 <th className="px-3 py-2">Category</th>
-                <th className="px-3 py-2 text-right">Composite</th>
+                <th className="px-3 py-2 text-right">Score</th>
                 <th className="px-3 py-2 text-right">Buckets</th>
                 <th className="px-3 py-2 text-right">MinEdge</th>
+                <th className="px-3 py-2 text-right">Weights (B/R/C)</th>
                 <th className="px-3 py-2 text-right">Expts</th>
               </tr>
             </thead>
@@ -97,6 +98,9 @@ export default function CategoryBreakdown({
                     </td>
                     <td className="px-3 py-2 text-right font-mono text-zinc-300">
                       {s.min_edge.toFixed(3)}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono text-zinc-400">
+                      {s.w_brier.toFixed(2)}/{s.w_roi.toFixed(2)}/{s.w_bet_rate.toFixed(2)}
                     </td>
                     <td className="px-3 py-2 text-right text-zinc-300">
                       {s.experiments_run}

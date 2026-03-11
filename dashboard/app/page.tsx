@@ -37,7 +37,7 @@ export default function Home() {
   return (
     <main className="mx-auto max-w-7xl space-y-16 px-6 py-12">
       <Section title="Validation Results" desc="Top-line performance on held-out validation set (36K markets)">
-        <HeroMetrics v={learning.validation} categoryStates={learning.category_states} />
+        <HeroMetrics v={learning.validation} testV={learning.test} categoryStates={learning.category_states} />
       </Section>
 
       <Section title="Learning Timeline" desc="Best composite score per category across 50 iterations of autonomous tuning">
@@ -45,7 +45,7 @@ export default function Home() {
       </Section>
 
       <Section title="Composite Score Formula" desc="How the three components combine into a single optimization target">
-        <CompositeExplainer v={learning.validation} />
+        <CompositeExplainer v={learning.validation} categoryStates={learning.category_states} />
       </Section>
 
       <Section title="Experiment Log" desc={`All ${results.length} experiments: parameter changes, outcomes, and keep/discard decisions`}>

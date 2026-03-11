@@ -431,7 +431,822 @@
       "max_diff": 0.0008
     }
   ],
-  "category_buckets": {},
+  "category_buckets": {
+    "crypto": [
+      {
+        "price_lo": 0,
+        "price_hi": 10,
+        "implied_prob": 0.05,
+        "yes_win_rate": 0,
+        "shift": -0.05,
+        "n_markets": 5490
+      },
+      {
+        "price_lo": 10,
+        "price_hi": 20,
+        "implied_prob": 0.15,
+        "yes_win_rate": 0.0053,
+        "shift": -0.1447,
+        "n_markets": 2065
+      },
+      {
+        "price_lo": 20,
+        "price_hi": 30,
+        "implied_prob": 0.25,
+        "yes_win_rate": 0.0053,
+        "shift": -0.2447,
+        "n_markets": 3945
+      },
+      {
+        "price_lo": 30,
+        "price_hi": 40,
+        "implied_prob": 0.35,
+        "yes_win_rate": 0.0362,
+        "shift": -0.3138,
+        "n_markets": 4138
+      },
+      {
+        "price_lo": 40,
+        "price_hi": 50,
+        "implied_prob": 0.45,
+        "yes_win_rate": 0.1212,
+        "shift": -0.3288,
+        "n_markets": 4820
+      },
+      {
+        "price_lo": 50,
+        "price_hi": 60,
+        "implied_prob": 0.55,
+        "yes_win_rate": 0.8076,
+        "shift": 0.2576,
+        "n_markets": 4554
+      },
+      {
+        "price_lo": 60,
+        "price_hi": 70,
+        "implied_prob": 0.65,
+        "yes_win_rate": 0.9476,
+        "shift": 0.2976,
+        "n_markets": 3721
+      },
+      {
+        "price_lo": 70,
+        "price_hi": 80,
+        "implied_prob": 0.75,
+        "yes_win_rate": 0.9899,
+        "shift": 0.2399,
+        "n_markets": 3872
+      },
+      {
+        "price_lo": 80,
+        "price_hi": 90,
+        "implied_prob": 0.85,
+        "yes_win_rate": 0.9976,
+        "shift": 0.1476,
+        "n_markets": 2884
+      },
+      {
+        "price_lo": 90,
+        "price_hi": 100,
+        "implied_prob": 0.95,
+        "yes_win_rate": 1,
+        "shift": 0.05,
+        "n_markets": 3168
+      }
+    ],
+    "politics": [
+      {
+        "price_lo": 0,
+        "price_hi": 5,
+        "implied_prob": 0.025,
+        "yes_win_rate": 0.0002,
+        "shift": -0.0248,
+        "n_markets": 28008
+      },
+      {
+        "price_lo": 5,
+        "price_hi": 10,
+        "implied_prob": 0.075,
+        "yes_win_rate": 0.0009,
+        "shift": -0.0741,
+        "n_markets": 3266
+      },
+      {
+        "price_lo": 10,
+        "price_hi": 15,
+        "implied_prob": 0.125,
+        "yes_win_rate": 0.0024,
+        "shift": -0.1226,
+        "n_markets": 3268
+      },
+      {
+        "price_lo": 15,
+        "price_hi": 20,
+        "implied_prob": 0.175,
+        "yes_win_rate": 0.0073,
+        "shift": -0.1677,
+        "n_markets": 3705
+      },
+      {
+        "price_lo": 20,
+        "price_hi": 25,
+        "implied_prob": 0.225,
+        "yes_win_rate": 0.0088,
+        "shift": -0.2162,
+        "n_markets": 4202
+      },
+      {
+        "price_lo": 25,
+        "price_hi": 30,
+        "implied_prob": 0.275,
+        "yes_win_rate": 0.0132,
+        "shift": -0.2618,
+        "n_markets": 4400
+      },
+      {
+        "price_lo": 30,
+        "price_hi": 35,
+        "implied_prob": 0.325,
+        "yes_win_rate": 0.0334,
+        "shift": -0.2916,
+        "n_markets": 4102
+      },
+      {
+        "price_lo": 35,
+        "price_hi": 40,
+        "implied_prob": 0.375,
+        "yes_win_rate": 0.0494,
+        "shift": -0.3256,
+        "n_markets": 3971
+      },
+      {
+        "price_lo": 40,
+        "price_hi": 45,
+        "implied_prob": 0.425,
+        "yes_win_rate": 0.0955,
+        "shift": -0.3295,
+        "n_markets": 4072
+      },
+      {
+        "price_lo": 45,
+        "price_hi": 50,
+        "implied_prob": 0.475,
+        "yes_win_rate": 0.1686,
+        "shift": -0.3064,
+        "n_markets": 4823
+      },
+      {
+        "price_lo": 50,
+        "price_hi": 55,
+        "implied_prob": 0.525,
+        "yes_win_rate": 0.6026,
+        "shift": 0.0776,
+        "n_markets": 4318
+      },
+      {
+        "price_lo": 55,
+        "price_hi": 60,
+        "implied_prob": 0.575,
+        "yes_win_rate": 0.7688,
+        "shift": 0.1938,
+        "n_markets": 3348
+      },
+      {
+        "price_lo": 60,
+        "price_hi": 65,
+        "implied_prob": 0.625,
+        "yes_win_rate": 0.8613,
+        "shift": 0.2363,
+        "n_markets": 2999
+      },
+      {
+        "price_lo": 65,
+        "price_hi": 70,
+        "implied_prob": 0.675,
+        "yes_win_rate": 0.9317,
+        "shift": 0.2567,
+        "n_markets": 3060
+      },
+      {
+        "price_lo": 70,
+        "price_hi": 75,
+        "implied_prob": 0.725,
+        "yes_win_rate": 0.9593,
+        "shift": 0.2343,
+        "n_markets": 3173
+      },
+      {
+        "price_lo": 75,
+        "price_hi": 80,
+        "implied_prob": 0.775,
+        "yes_win_rate": 0.9825,
+        "shift": 0.2075,
+        "n_markets": 3365
+      },
+      {
+        "price_lo": 80,
+        "price_hi": 85,
+        "implied_prob": 0.825,
+        "yes_win_rate": 0.9905,
+        "shift": 0.1655,
+        "n_markets": 3261
+      },
+      {
+        "price_lo": 85,
+        "price_hi": 90,
+        "implied_prob": 0.875,
+        "yes_win_rate": 0.9958,
+        "shift": 0.1208,
+        "n_markets": 3067
+      },
+      {
+        "price_lo": 90,
+        "price_hi": 95,
+        "implied_prob": 0.925,
+        "yes_win_rate": 0.9984,
+        "shift": 0.0734,
+        "n_markets": 3065
+      },
+      {
+        "price_lo": 95,
+        "price_hi": 100,
+        "implied_prob": 0.975,
+        "yes_win_rate": 0.9998,
+        "shift": 0.0248,
+        "n_markets": 15122
+      }
+    ],
+    "finance": [
+      {
+        "price_lo": 0,
+        "price_hi": 10,
+        "implied_prob": 0.05,
+        "yes_win_rate": 0,
+        "shift": -0.05,
+        "n_markets": 1119
+      },
+      {
+        "price_lo": 10,
+        "price_hi": 20,
+        "implied_prob": 0.15,
+        "yes_win_rate": 0,
+        "shift": -0.15,
+        "n_markets": 72
+      },
+      {
+        "price_lo": 20,
+        "price_hi": 30,
+        "implied_prob": 0.25,
+        "yes_win_rate": 0,
+        "shift": -0.25,
+        "n_markets": 29
+      },
+      {
+        "price_lo": 30,
+        "price_hi": 40,
+        "implied_prob": 0.35,
+        "yes_win_rate": 0.0556,
+        "shift": -0.2944,
+        "n_markets": 18
+      },
+      {
+        "price_lo": 40,
+        "price_hi": 50,
+        "implied_prob": 0.45,
+        "yes_win_rate": 0.1,
+        "shift": -0.35,
+        "n_markets": 10
+      },
+      {
+        "price_lo": 50,
+        "price_hi": 60,
+        "implied_prob": 0.55,
+        "yes_win_rate": 0.5,
+        "shift": 0,
+        "n_markets": 8
+      },
+      {
+        "price_lo": 60,
+        "price_hi": 70,
+        "implied_prob": 0.65,
+        "yes_win_rate": 0.7143,
+        "shift": 0,
+        "n_markets": 14
+      },
+      {
+        "price_lo": 70,
+        "price_hi": 80,
+        "implied_prob": 0.75,
+        "yes_win_rate": 0.96,
+        "shift": 0.21,
+        "n_markets": 25
+      },
+      {
+        "price_lo": 80,
+        "price_hi": 90,
+        "implied_prob": 0.85,
+        "yes_win_rate": 0.9706,
+        "shift": 0,
+        "n_markets": 34
+      },
+      {
+        "price_lo": 90,
+        "price_hi": 100,
+        "implied_prob": 0.95,
+        "yes_win_rate": 1,
+        "shift": 0.05,
+        "n_markets": 715
+      }
+    ],
+    "sports": [
+      {
+        "price_lo": 0,
+        "price_hi": 5,
+        "implied_prob": 0.025,
+        "yes_win_rate": 0.0002,
+        "shift": -0.0248,
+        "n_markets": 28008
+      },
+      {
+        "price_lo": 5,
+        "price_hi": 10,
+        "implied_prob": 0.075,
+        "yes_win_rate": 0.0009,
+        "shift": -0.0741,
+        "n_markets": 3266
+      },
+      {
+        "price_lo": 10,
+        "price_hi": 15,
+        "implied_prob": 0.125,
+        "yes_win_rate": 0.0024,
+        "shift": -0.1226,
+        "n_markets": 3268
+      },
+      {
+        "price_lo": 15,
+        "price_hi": 20,
+        "implied_prob": 0.175,
+        "yes_win_rate": 0.0073,
+        "shift": -0.1677,
+        "n_markets": 3705
+      },
+      {
+        "price_lo": 20,
+        "price_hi": 25,
+        "implied_prob": 0.225,
+        "yes_win_rate": 0.0088,
+        "shift": -0.2162,
+        "n_markets": 4202
+      },
+      {
+        "price_lo": 25,
+        "price_hi": 30,
+        "implied_prob": 0.275,
+        "yes_win_rate": 0.0132,
+        "shift": -0.2618,
+        "n_markets": 4400
+      },
+      {
+        "price_lo": 30,
+        "price_hi": 35,
+        "implied_prob": 0.325,
+        "yes_win_rate": 0.0334,
+        "shift": -0.2916,
+        "n_markets": 4102
+      },
+      {
+        "price_lo": 35,
+        "price_hi": 40,
+        "implied_prob": 0.375,
+        "yes_win_rate": 0.0494,
+        "shift": -0.3256,
+        "n_markets": 3971
+      },
+      {
+        "price_lo": 40,
+        "price_hi": 45,
+        "implied_prob": 0.425,
+        "yes_win_rate": 0.0955,
+        "shift": -0.3295,
+        "n_markets": 4072
+      },
+      {
+        "price_lo": 45,
+        "price_hi": 50,
+        "implied_prob": 0.475,
+        "yes_win_rate": 0.1686,
+        "shift": -0.3064,
+        "n_markets": 4823
+      },
+      {
+        "price_lo": 50,
+        "price_hi": 55,
+        "implied_prob": 0.525,
+        "yes_win_rate": 0.6026,
+        "shift": 0.0776,
+        "n_markets": 4318
+      },
+      {
+        "price_lo": 55,
+        "price_hi": 60,
+        "implied_prob": 0.575,
+        "yes_win_rate": 0.7688,
+        "shift": 0.1938,
+        "n_markets": 3348
+      },
+      {
+        "price_lo": 60,
+        "price_hi": 65,
+        "implied_prob": 0.625,
+        "yes_win_rate": 0.8613,
+        "shift": 0.2363,
+        "n_markets": 2999
+      },
+      {
+        "price_lo": 65,
+        "price_hi": 70,
+        "implied_prob": 0.675,
+        "yes_win_rate": 0.9317,
+        "shift": 0.2567,
+        "n_markets": 3060
+      },
+      {
+        "price_lo": 70,
+        "price_hi": 75,
+        "implied_prob": 0.725,
+        "yes_win_rate": 0.9593,
+        "shift": 0.2343,
+        "n_markets": 3173
+      },
+      {
+        "price_lo": 75,
+        "price_hi": 80,
+        "implied_prob": 0.775,
+        "yes_win_rate": 0.9825,
+        "shift": 0.2075,
+        "n_markets": 3365
+      },
+      {
+        "price_lo": 80,
+        "price_hi": 85,
+        "implied_prob": 0.825,
+        "yes_win_rate": 0.9905,
+        "shift": 0.1655,
+        "n_markets": 3261
+      },
+      {
+        "price_lo": 85,
+        "price_hi": 90,
+        "implied_prob": 0.875,
+        "yes_win_rate": 0.9958,
+        "shift": 0.1208,
+        "n_markets": 3067
+      },
+      {
+        "price_lo": 90,
+        "price_hi": 95,
+        "implied_prob": 0.925,
+        "yes_win_rate": 0.9984,
+        "shift": 0.0734,
+        "n_markets": 3065
+      },
+      {
+        "price_lo": 95,
+        "price_hi": 100,
+        "implied_prob": 0.975,
+        "yes_win_rate": 0.9998,
+        "shift": 0.0248,
+        "n_markets": 15122
+      }
+    ],
+    "tech": [
+      {
+        "price_lo": 0,
+        "price_hi": 10,
+        "implied_prob": 0.05,
+        "yes_win_rate": 0.0003,
+        "shift": -0.0497,
+        "n_markets": 31274
+      },
+      {
+        "price_lo": 10,
+        "price_hi": 20,
+        "implied_prob": 0.15,
+        "yes_win_rate": 0.005,
+        "shift": -0.145,
+        "n_markets": 6973
+      },
+      {
+        "price_lo": 20,
+        "price_hi": 30,
+        "implied_prob": 0.25,
+        "yes_win_rate": 0.011,
+        "shift": -0.239,
+        "n_markets": 8602
+      },
+      {
+        "price_lo": 30,
+        "price_hi": 40,
+        "implied_prob": 0.35,
+        "yes_win_rate": 0.0412,
+        "shift": -0.3088,
+        "n_markets": 8073
+      },
+      {
+        "price_lo": 40,
+        "price_hi": 50,
+        "implied_prob": 0.45,
+        "yes_win_rate": 0.1351,
+        "shift": -0.3149,
+        "n_markets": 8895
+      },
+      {
+        "price_lo": 50,
+        "price_hi": 60,
+        "implied_prob": 0.55,
+        "yes_win_rate": 0.6752,
+        "shift": 0.1252,
+        "n_markets": 7666
+      },
+      {
+        "price_lo": 60,
+        "price_hi": 70,
+        "implied_prob": 0.65,
+        "yes_win_rate": 0.8968,
+        "shift": 0.2468,
+        "n_markets": 6059
+      },
+      {
+        "price_lo": 70,
+        "price_hi": 80,
+        "implied_prob": 0.75,
+        "yes_win_rate": 0.9712,
+        "shift": 0.2212,
+        "n_markets": 6538
+      },
+      {
+        "price_lo": 80,
+        "price_hi": 90,
+        "implied_prob": 0.85,
+        "yes_win_rate": 0.993,
+        "shift": 0.143,
+        "n_markets": 6328
+      },
+      {
+        "price_lo": 90,
+        "price_hi": 100,
+        "implied_prob": 0.95,
+        "yes_win_rate": 0.9996,
+        "shift": 0.0496,
+        "n_markets": 18187
+      }
+    ],
+    "entertainment": [
+      {
+        "price_lo": 0,
+        "price_hi": 10,
+        "implied_prob": 0.05,
+        "yes_win_rate": 0.0003,
+        "shift": -0.0497,
+        "n_markets": 31274
+      },
+      {
+        "price_lo": 10,
+        "price_hi": 20,
+        "implied_prob": 0.15,
+        "yes_win_rate": 0.005,
+        "shift": -0.145,
+        "n_markets": 6973
+      },
+      {
+        "price_lo": 20,
+        "price_hi": 30,
+        "implied_prob": 0.25,
+        "yes_win_rate": 0.011,
+        "shift": -0.239,
+        "n_markets": 8602
+      },
+      {
+        "price_lo": 30,
+        "price_hi": 40,
+        "implied_prob": 0.35,
+        "yes_win_rate": 0.0412,
+        "shift": -0.3088,
+        "n_markets": 8073
+      },
+      {
+        "price_lo": 40,
+        "price_hi": 50,
+        "implied_prob": 0.45,
+        "yes_win_rate": 0.1351,
+        "shift": -0.3149,
+        "n_markets": 8895
+      },
+      {
+        "price_lo": 50,
+        "price_hi": 60,
+        "implied_prob": 0.55,
+        "yes_win_rate": 0.6752,
+        "shift": 0.1252,
+        "n_markets": 7666
+      },
+      {
+        "price_lo": 60,
+        "price_hi": 70,
+        "implied_prob": 0.65,
+        "yes_win_rate": 0.8968,
+        "shift": 0.2468,
+        "n_markets": 6059
+      },
+      {
+        "price_lo": 70,
+        "price_hi": 80,
+        "implied_prob": 0.75,
+        "yes_win_rate": 0.9712,
+        "shift": 0.2212,
+        "n_markets": 6538
+      },
+      {
+        "price_lo": 80,
+        "price_hi": 90,
+        "implied_prob": 0.85,
+        "yes_win_rate": 0.993,
+        "shift": 0.143,
+        "n_markets": 6328
+      },
+      {
+        "price_lo": 90,
+        "price_hi": 100,
+        "implied_prob": 0.95,
+        "yes_win_rate": 0.9996,
+        "shift": 0.0496,
+        "n_markets": 18187
+      }
+    ],
+    "other": [
+      {
+        "price_lo": 0,
+        "price_hi": 5,
+        "implied_prob": 0.025,
+        "yes_win_rate": 0.0001,
+        "shift": -0.0249,
+        "n_markets": 16378
+      },
+      {
+        "price_lo": 5,
+        "price_hi": 10,
+        "implied_prob": 0.075,
+        "yes_win_rate": 0.0009,
+        "shift": -0.0741,
+        "n_markets": 2263
+      },
+      {
+        "price_lo": 10,
+        "price_hi": 15,
+        "implied_prob": 0.125,
+        "yes_win_rate": 0.0023,
+        "shift": -0.1227,
+        "n_markets": 2158
+      },
+      {
+        "price_lo": 15,
+        "price_hi": 20,
+        "implied_prob": 0.175,
+        "yes_win_rate": 0.0081,
+        "shift": -0.1669,
+        "n_markets": 2210
+      },
+      {
+        "price_lo": 20,
+        "price_hi": 25,
+        "implied_prob": 0.225,
+        "yes_win_rate": 0.012,
+        "shift": -0.213,
+        "n_markets": 2173
+      },
+      {
+        "price_lo": 25,
+        "price_hi": 30,
+        "implied_prob": 0.275,
+        "yes_win_rate": 0.0202,
+        "shift": -0.2548,
+        "n_markets": 2179
+      },
+      {
+        "price_lo": 30,
+        "price_hi": 35,
+        "implied_prob": 0.325,
+        "yes_win_rate": 0.0379,
+        "shift": -0.2871,
+        "n_markets": 1902
+      },
+      {
+        "price_lo": 35,
+        "price_hi": 40,
+        "implied_prob": 0.375,
+        "yes_win_rate": 0.054,
+        "shift": -0.321,
+        "n_markets": 1832
+      },
+      {
+        "price_lo": 40,
+        "price_hi": 45,
+        "implied_prob": 0.425,
+        "yes_win_rate": 0.1154,
+        "shift": -0.3096,
+        "n_markets": 1863
+      },
+      {
+        "price_lo": 45,
+        "price_hi": 50,
+        "implied_prob": 0.475,
+        "yes_win_rate": 0.1759,
+        "shift": -0.2991,
+        "n_markets": 2064
+      },
+      {
+        "price_lo": 50,
+        "price_hi": 55,
+        "implied_prob": 0.525,
+        "yes_win_rate": 0.3788,
+        "shift": -0.1462,
+        "n_markets": 1729
+      },
+      {
+        "price_lo": 55,
+        "price_hi": 60,
+        "implied_prob": 0.575,
+        "yes_win_rate": 0.6193,
+        "shift": 0.0443,
+        "n_markets": 1253
+      },
+      {
+        "price_lo": 60,
+        "price_hi": 65,
+        "implied_prob": 0.625,
+        "yes_win_rate": 0.75,
+        "shift": 0.125,
+        "n_markets": 1064
+      },
+      {
+        "price_lo": 65,
+        "price_hi": 70,
+        "implied_prob": 0.675,
+        "yes_win_rate": 0.8816,
+        "shift": 0.2066,
+        "n_markets": 1115
+      },
+      {
+        "price_lo": 70,
+        "price_hi": 75,
+        "implied_prob": 0.725,
+        "yes_win_rate": 0.9169,
+        "shift": 0.1919,
+        "n_markets": 1180
+      },
+      {
+        "price_lo": 75,
+        "price_hi": 80,
+        "implied_prob": 0.775,
+        "yes_win_rate": 0.9637,
+        "shift": 0.1887,
+        "n_markets": 1239
+      },
+      {
+        "price_lo": 80,
+        "price_hi": 85,
+        "implied_prob": 0.825,
+        "yes_win_rate": 0.983,
+        "shift": 0.158,
+        "n_markets": 1349
+      },
+      {
+        "price_lo": 85,
+        "price_hi": 90,
+        "implied_prob": 0.875,
+        "yes_win_rate": 0.9931,
+        "shift": 0.1181,
+        "n_markets": 1601
+      },
+      {
+        "price_lo": 90,
+        "price_hi": 95,
+        "implied_prob": 0.925,
+        "yes_win_rate": 0.9973,
+        "shift": 0.0723,
+        "n_markets": 1872
+      },
+      {
+        "price_lo": 95,
+        "price_hi": 100,
+        "implied_prob": 0.975,
+        "yes_win_rate": 0.9997,
+        "shift": 0.0247,
+        "n_markets": 9668
+      }
+    ]
+  },
   "methodology": {
     "window_blocks": 5000,
     "min_volume": 1000,

@@ -19,7 +19,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from autoresearch.evaluate import brier_score, composite_score, simulate_pnl
+from autoresearch.evaluate import brier_score, composite_score, simulate_pnl  # noqa: F401 — composite_score used as fallback
 from autoresearch.h2_calibration import (
     BUCKET_CONFIGS,
     OUTPUT_PARQUET,
@@ -46,8 +46,25 @@ NUM_BUCKETS_OPTIONS = [7, 10, 20]
 SIGNIFICANCE_LEVEL_OPTIONS = [0.01, 0.05, 0.10]
 MIN_EDGE_DELTA_RANGE = (0.005, 0.03)
 
+# Weight optimization ranges
+WEIGHT_MIN = 0.05
+WEIGHT_MAX = 0.80
+WEIGHT_DELTA_RANGE = (0.03, 0.10)
+WEIGHT_KEYS = ["w_brier", "w_roi", "w_bet_rate"]
+
 # Minimum markets in a category to run experiments
 MIN_CATEGORY_MARKETS = 50
+
+
+def parameterized_composite_score(
+    brier: float, roi: float, bet_rate: float,
+    w_brier: float = 0.30, w_roi: float = 0.50, w_bet_rate: float = 0.20,
+) -> float:
+    """Composite score with tunable weights (used by learning loop only)."""
+    norm_brier = 1.0 - brier
+    norm_roi = max(0.0, min(1.0, (roi + 1.0) / 2.0))
+    norm_bet_rate = min(1.0, bet_rate / 0.30)
+    return round(w_brier * norm_brier + w_roi * norm_roi + w_bet_rate * norm_bet_rate, 6)
 
 
 # ---------------------------------------------------------------------------
@@ -123,13 +140,27 @@ def predict_with_table(
     return predictions
 
 
-def score_predictions(predictions: list[dict[str, Any]], total_markets: int) -> dict[str, Any]:
-    """Compute composite, brier, PnL from predictions list."""
+def score_predictions(
+    predictions: list[dict[str, Any]],
+    total_markets: int,
+    weights: dict[str, float] | None = None,
+) -> dict[str, Any]:
+    """Compute composite, brier, PnL from predictions list.
+
+    When *weights* is provided, uses parameterized_composite_score with those
+    weights; otherwise falls back to the fixed composite_score from evaluate.py.
+    """
     brier = brier_score(predictions)
     pnl_result = simulate_pnl(predictions)
     bets = [p for p in predictions if p.get("bet_side", "PASS") != "PASS" and float(p.get("bet_size", 0)) > 0]
     bet_rate = len(bets) / total_markets if total_markets > 0 else 0.0
-    comp = composite_score(brier, pnl_result["roi"], bet_rate)
+    if weights is not None:
+        comp = parameterized_composite_score(
+            brier, pnl_result["roi"], bet_rate,
+            w_brier=weights["w_brier"], w_roi=weights["w_roi"], w_bet_rate=weights["w_bet_rate"],
+        )
+    else:
+        comp = composite_score(brier, pnl_result["roi"], bet_rate)
     return {
         "composite": comp,
         "brier": round(brier, 6),
@@ -148,6 +179,9 @@ def default_category_state() -> dict[str, Any]:
         "significance_level": 0.05,
         "min_edge": 0.0,
         "use_own_table": False,
+        "w_brier": 0.30,
+        "w_roi": 0.50,
+        "w_bet_rate": 0.20,
         "best_composite": 0.0,
         "calibration_table": [],
         "experiments_run": 0,
@@ -158,13 +192,45 @@ def default_category_state() -> dict[str, Any]:
 # Experiment proposal
 # ---------------------------------------------------------------------------
 
+def _mutate_weights(state: dict[str, Any], target_key: str, rng: random.Random) -> dict[str, float]:
+    """Bump one weight by a random delta, redistribute across the other two, clamp and normalize."""
+    weights = {k: state[k] for k in WEIGHT_KEYS}
+    delta = rng.uniform(*WEIGHT_DELTA_RANGE)
+    if rng.random() < 0.5:
+        delta = -delta
+
+    weights[target_key] = max(WEIGHT_MIN, min(WEIGHT_MAX, weights[target_key] + delta))
+
+    # Redistribute remaining budget proportionally across other two
+    others = [k for k in WEIGHT_KEYS if k != target_key]
+    remaining = 1.0 - weights[target_key]
+    other_sum = sum(weights[k] for k in others)
+
+    if other_sum > 0:
+        for k in others:
+            weights[k] = remaining * (weights[k] / other_sum)
+    else:
+        for k in others:
+            weights[k] = remaining / len(others)
+
+    # Clamp all to [WEIGHT_MIN, WEIGHT_MAX] and re-normalize to sum=1.0
+    for k in WEIGHT_KEYS:
+        weights[k] = max(WEIGHT_MIN, min(WEIGHT_MAX, weights[k]))
+    total = sum(weights.values())
+    for k in WEIGHT_KEYS:
+        weights[k] = round(weights[k] / total, 4)
+
+    return weights
+
+
 def propose_experiment(
     category: str,
     state: dict[str, Any],
     rng: random.Random,
 ) -> tuple[str, Any, Any, str]:
     """Propose a single parameter mutation. Returns (param_name, old_val, new_val, description)."""
-    param = rng.choice(["num_buckets", "significance_level", "min_edge", "use_own_table"])
+    param = rng.choice(["num_buckets", "significance_level", "min_edge", "use_own_table",
+                         "w_brier", "w_roi", "w_bet_rate"])
 
     if param == "num_buckets":
         old = state["num_buckets"]
@@ -186,6 +252,13 @@ def propose_experiment(
         else:
             new = round(min(0.20, old + delta), 4)
         desc = f"min_edge {old:.4f} -> {new:.4f}"
+
+    elif param in WEIGHT_KEYS:
+        old = {k: state[k] for k in WEIGHT_KEYS}
+        new = _mutate_weights(state, param, rng)
+        desc = f"weights {old['w_brier']:.2f}/{old['w_roi']:.2f}/{old['w_bet_rate']:.2f} -> {new['w_brier']:.2f}/{new['w_roi']:.2f}/{new['w_bet_rate']:.2f}"
+        # Use "weights" as the param name so run_experiment/main loop handle all 3 together
+        return "weights", old, new, desc
 
     else:  # use_own_table
         old = state["use_own_table"]
@@ -214,7 +287,10 @@ def run_experiment(
     """
     # Copy state and apply mutation
     trial = dict(state)
-    trial[param_name] = new_value
+    if param_name == "weights":
+        trial.update(new_value)  # apply all 3 weight keys
+    else:
+        trial[param_name] = new_value
 
     num_buckets = trial["num_buckets"]
     if num_buckets not in BUCKET_CONFIGS:
@@ -247,7 +323,8 @@ def run_experiment(
         return 0.0, cal_table
 
     preds = predict_with_table(cat_test, cal_table, min_edge=min_edge)
-    result = score_predictions(preds, len(cat_test))
+    weights = {k: trial[k] for k in WEIGHT_KEYS}
+    result = score_predictions(preds, len(cat_test), weights=weights)
     return result["composite"], cal_table
 
 
@@ -298,16 +375,17 @@ def print_category_distribution(df: pd.DataFrame) -> None:
 
 def print_progress(category_states: dict[str, dict], iteration: int) -> None:
     print(f"\n=== PROGRESS (after {iteration} iterations) ===")
-    print(f"  {'Category':<15} {'Composite':>10} {'Buckets':>8} {'OwnTable':>9} {'MinEdge':>8} {'SigLevel':>9} {'Exps':>5}")
-    print("  " + "-" * 70)
+    print(f"  {'Category':<15} {'Composite':>10} {'Buckets':>8} {'OwnTable':>9} {'MinEdge':>8} {'SigLevel':>9} {'Weights(B/R/C)':>16} {'Exps':>5}")
+    print("  " + "-" * 86)
     for cat in TRACKED_CATEGORIES:
         if cat not in category_states:
             continue
         s = category_states[cat]
+        w_str = f"{s.get('w_brier', 0.30):.2f}/{s.get('w_roi', 0.50):.2f}/{s.get('w_bet_rate', 0.20):.2f}"
         print(
             f"  {cat:<15} {s['best_composite']:>10.6f} {s['num_buckets']:>8} "
             f"{'yes' if s['use_own_table'] else 'no':>9} {s['min_edge']:>8.4f} "
-            f"{s['significance_level']:>9.2f} {s['experiments_run']:>5}"
+            f"{s['significance_level']:>9.2f} {w_str:>16} {s['experiments_run']:>5}"
         )
 
 
@@ -319,16 +397,17 @@ def print_final_summary(
 ) -> None:
     """Print final per-category breakdown with $100 bet PnL simulation."""
     print("\n=== BEST PER-CATEGORY CONFIG ===")
-    print(f"  {'Category':<15} {'Composite':>10} {'Buckets':>8} {'OwnTable':>9} {'MinEdge':>8} {'SigLevel':>9}")
-    print("  " + "-" * 65)
+    print(f"  {'Category':<15} {'Composite':>10} {'Buckets':>8} {'OwnTable':>9} {'MinEdge':>8} {'SigLevel':>9} {'Weights(B/R/C)':>16}")
+    print("  " + "-" * 81)
     for cat in TRACKED_CATEGORIES:
         if cat not in category_states:
             continue
         s = category_states[cat]
+        w_str = f"{s.get('w_brier', 0.30):.2f}/{s.get('w_roi', 0.50):.2f}/{s.get('w_bet_rate', 0.20):.2f}"
         print(
             f"  {cat:<15} {s['best_composite']:>10.4f} {s['num_buckets']:>8} "
             f"{'yes' if s['use_own_table'] else 'no':>9} {s['min_edge']:>8.4f} "
-            f"{s['significance_level']:>9.2f}"
+            f"{s['significance_level']:>9.2f} {w_str:>16}"
         )
 
     print(f"\n=== PER-CATEGORY BREAKDOWN (${BET_SIZE:.0f} bets) ===")
@@ -353,7 +432,8 @@ def print_final_summary(
             src = global_train_df
         cal_table = build_calibration_table_from_subset(src, edges, significance_level=s["significance_level"])
         preds = predict_with_table(cat_test, cal_table, min_edge=s["min_edge"])
-        result = score_predictions(preds, len(cat_test))
+        cat_weights = {k: s.get(k, v) for k, v in zip(WEIGHT_KEYS, [0.30, 0.50, 0.20])}
+        result = score_predictions(preds, len(cat_test), weights=cat_weights)
 
         print(
             f"  {cat:<15} {len(cat_test):>8} {result['num_bets']:>6} {result['num_wins']:>6} "
@@ -396,6 +476,7 @@ def run_validation(
     if not all_preds:
         return {"composite": 0.0}
 
+    # Validation uses fixed weights (the "exam" scorer equivalent)
     return score_predictions(all_preds, len(val_df))
 
 
@@ -432,6 +513,9 @@ def save_calibration_json(
             "significance_level": s["significance_level"],
             "min_edge": s["min_edge"],
             "use_own_table": s["use_own_table"],
+            "w_brier": s.get("w_brier", 0.30),
+            "w_roi": s.get("w_roi", 0.50),
+            "w_bet_rate": s.get("w_bet_rate", 0.20),
             "best_composite": s["best_composite"],
             "calibration_table": cal_table,
         }
@@ -443,6 +527,7 @@ def save_calibration_json(
 
 def save_learning_results(
     category_states: dict[str, dict],
+    test_result: dict[str, Any],
     validation_result: dict[str, Any],
     total_iterations: int,
 ) -> None:
@@ -453,6 +538,7 @@ def save_learning_results(
             cat: {k: v for k, v in s.items() if k != "calibration_table"}
             for cat, s in category_states.items()
         },
+        "test": test_result,
         "validation": validation_result,
     }
     LEARNING_RESULTS_JSON.write_text(json.dumps(output, indent=2, default=str) + "\n")
@@ -508,7 +594,8 @@ def main_loop(max_iterations: int = 0, seed: int = 42) -> None:
         # Score baseline on test set
         cat_test = test_df[test_df["category"] == cat]
         preds = predict_with_table(cat_test, global_table, min_edge=0.0)
-        result = score_predictions(preds, len(cat_test))
+        default_weights = {k: state[k] for k in WEIGHT_KEYS}
+        result = score_predictions(preds, len(cat_test), weights=default_weights)
         state["best_composite"] = result["composite"]
 
         category_states[cat] = state
@@ -556,7 +643,10 @@ def main_loop(max_iterations: int = 0, seed: int = 42) -> None:
         # Compare and keep/discard
         if composite > state["best_composite"]:
             status = "keep"
-            state[param_name] = new_val
+            if param_name == "weights":
+                state.update(new_val)  # apply all 3 weight keys
+            else:
+                state[param_name] = new_val
             state["best_composite"] = composite
             state["calibration_table"] = cal_table
         else:
@@ -588,26 +678,29 @@ def main_loop(max_iterations: int = 0, seed: int = 42) -> None:
     print_progress(category_states, total_iterations)
     print_final_summary(category_states, test_df, train_df, train_df)
 
+    # Test set aggregate (uses same run_validation logic on test_df)
+    print("\n=== TEST SET (parameter selection set) ===")
+    test_result = run_validation(test_df, train_df, train_df, category_states)
+    print(f"  Composite = {test_result['composite']:.6f}")
+    print(f"  ROI = {test_result.get('roi', 0):+.4f}, PnL = ${test_result.get('total_pnl', 0):+.2f}")
+    print(f"  Bets = {test_result.get('num_bets', 0)}, Wins = {test_result.get('num_wins', 0)}")
+
     # Validation
     print("\n=== VALIDATION (held-out set) ===")
     val_result = run_validation(val_df, train_df, train_df, category_states)
-    print(f"  Overall composite = {val_result['composite']:.6f}")
-    print(f"  Brier = {val_result.get('brier', 0):.6f}")
-    print(f"  ROI = {val_result.get('roi', 0):+.4f}")
-    print(f"  PnL = ${val_result.get('total_pnl', 0):+.2f}")
+    print(f"  Composite = {val_result['composite']:.6f}")
+    print(f"  ROI = {val_result.get('roi', 0):+.4f}, PnL = ${val_result.get('total_pnl', 0):+.2f}")
     print(f"  Bets = {val_result.get('num_bets', 0)}, Wins = {val_result.get('num_wins', 0)}")
 
     # Compare to test composite
-    test_composites = [category_states[c]["best_composite"] for c in active_categories]
-    avg_test_composite = np.mean(test_composites) if test_composites else 0
-    if avg_test_composite > 0:
-        deviation = abs(val_result["composite"] - avg_test_composite) / avg_test_composite * 100
-        print(f"  Deviation from avg test composite: {deviation:.1f}% "
+    if test_result["composite"] > 0:
+        deviation = abs(val_result["composite"] - test_result["composite"]) / test_result["composite"] * 100
+        print(f"  Deviation from test composite: {deviation:.1f}% "
               f"({'PASS' if deviation <= 10 else 'WARN: >10%'})")
 
     # Save outputs
     save_calibration_json(category_states, train_df, train_df)
-    save_learning_results(category_states, val_result, total_iterations)
+    save_learning_results(category_states, test_result, val_result, total_iterations)
 
     print("\nDone.")
 

@@ -40,7 +40,6 @@ export default function BucketPerformance({
               <th className="px-4 py-3 text-right">N Markets</th>
               <th className="px-4 py-3 text-right">Implied Prob</th>
               <th className="px-4 py-3 text-right">Win Rate</th>
-              <th className="px-4 py-3 text-right">Shift</th>
               <th className="px-4 py-3 text-right">Edge</th>
             </tr>
           </thead>
@@ -60,13 +59,6 @@ export default function BucketPerformance({
                   </td>
                   <td className="px-4 py-2 text-right font-mono text-zinc-200">
                     {b.yes_win_rate != null ? `${(b.yes_win_rate * 100).toFixed(2)}%` : "N/A"}
-                  </td>
-                  <td
-                    className={`px-4 py-2 text-right font-mono ${
-                      b.shift > 0 ? "text-emerald-400" : b.shift < 0 ? "text-red-400" : "text-zinc-500"
-                    }`}
-                  >
-                    {b.shift > 0 ? "+" : ""}{(b.shift * 100).toFixed(2)}%
                   </td>
                   <td className="px-4 py-2 text-right font-mono text-amber-300">
                     {(edge * 100).toFixed(2)}%

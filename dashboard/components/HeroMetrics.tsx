@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Validation, CategoryState, CATEGORY_COLORS, DISPLAY_CATEGORIES } from "@/lib/data";
+import { Validation, CategoryState, DISPLAY_CATEGORIES } from "@/lib/data";
 
 function Card({
   label,
@@ -28,54 +28,51 @@ function Card({
 
 export default function HeroMetrics({
   v,
+  testV,
   categoryStates,
 }: {
   v: Validation;
+  testV?: Validation;
   categoryStates: Record<string, CategoryState>;
 }) {
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [dataset, setDataset] = useState<string>("validation");
 
-  const compositeValue =
-    selectedCategory === "all"
-      ? v.composite
-      : categoryStates[selectedCategory]?.best_composite ?? 0;
-
-  const compositeSub =
-    selectedCategory === "all"
-      ? "validation set"
-      : `${selectedCategory} best (test set)`;
+  const active = dataset === "test" && testV ? testV : v;
+  const datasetLabel = dataset === "test" ? "test set" : "validation set";
+  const winRate = active.num_bets > 0 ? (active.num_wins / active.num_bets) * 100 : 0;
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      <Card label="Composite Score" value={compositeValue.toFixed(4)} sub={compositeSub}>
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-xs text-zinc-300"
-        >
-          <option value="all">All (Validation)</option>
-          {DISPLAY_CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
-      </Card>
-      <Card
-        label="ROI"
-        value={`+${(v.roi * 100).toFixed(1)}%`}
-        sub={`${v.num_bets.toLocaleString()} bets`}
-      />
-      <Card
-        label="PnL"
-        value={`+$${Math.round(v.total_pnl).toLocaleString()}`}
-        sub="$100/bet"
-      />
-      <Card
-        label="Win Rate"
-        value={`${((v.num_wins / v.num_bets) * 100).toFixed(1)}%`}
-        sub={`${v.num_wins.toLocaleString()} wins`}
-      />
+    <div className="space-y-3">
+      {testV && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-zinc-500">Dataset:</span>
+          <select
+            value={dataset}
+            onChange={(e) => setDataset(e.target.value)}
+            className="rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-xs text-zinc-300"
+          >
+            <option value="validation">Validation (held-out)</option>
+            <option value="test">Test (parameter selection)</option>
+          </select>
+        </div>
+      )}
+      <div className="grid grid-cols-3 gap-4">
+        <Card
+          label="ROI"
+          value={`${active.roi >= 0 ? "+" : ""}${(active.roi * 100).toFixed(1)}%`}
+          sub={`${active.num_bets.toLocaleString()} bets, ${datasetLabel}`}
+        />
+        <Card
+          label="PnL"
+          value={`${active.total_pnl >= 0 ? "+" : ""}$${Math.round(active.total_pnl).toLocaleString()}`}
+          sub="$100/bet"
+        />
+        <Card
+          label="Win Rate"
+          value={`${winRate.toFixed(1)}%`}
+          sub={`${active.num_wins.toLocaleString()} wins`}
+        />
+      </div>
     </div>
   );
 }

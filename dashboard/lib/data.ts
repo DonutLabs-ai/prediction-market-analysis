@@ -19,6 +19,9 @@ export interface CategoryState {
   significance_level: number;
   min_edge: number;
   use_own_table: boolean;
+  w_brier: number;
+  w_roi: number;
+  w_bet_rate: number;
   best_composite: number;
   experiments_run: number;
 }
@@ -37,6 +40,7 @@ export interface Validation {
 export interface LearningResults {
   total_iterations: number;
   category_states: Record<string, CategoryState>;
+  test?: Validation;
   validation: Validation;
 }
 
@@ -108,7 +112,14 @@ export function getResults(): ExperimentRow[] {
 }
 
 export function getLearning(): LearningResults {
-  return learningData as LearningResults;
+  const data = learningData as unknown as LearningResults;
+  // Backward compat: add default weights if missing from old data
+  for (const state of Object.values(data.category_states)) {
+    if (state.w_brier == null) state.w_brier = 0.30;
+    if (state.w_roi == null) state.w_roi = 0.50;
+    if (state.w_bet_rate == null) state.w_bet_rate = 0.20;
+  }
+  return data;
 }
 
 export function getCalibration(): CalibrationData {

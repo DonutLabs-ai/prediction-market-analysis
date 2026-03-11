@@ -35,13 +35,14 @@ export default function CalibrationCurve({
   const hasSplits = splitBuckets && Object.keys(splitBuckets).length === 3;
 
   // Unified data shape for both modes
+  const r1 = (v: number) => Math.round(v * 1000) / 10;  // to 1 decimal place percentage
   const data = buckets.map((b, i) => ({
-    implied: b.implied_prob * 100,
-    perfect: b.implied_prob * 100,
-    actual: b.yes_win_rate * 100,
-    train: hasSplits ? splitBuckets.train[i]?.yes_win_rate * 100 : 0,
-    test: hasSplits ? splitBuckets.test[i]?.yes_win_rate * 100 : 0,
-    validation: hasSplits ? splitBuckets.validation[i]?.yes_win_rate * 100 : 0,
+    implied: r1(b.implied_prob),
+    perfect: r1(b.implied_prob),
+    actual: r1(b.yes_win_rate),
+    train: hasSplits ? r1(splitBuckets.train[i]?.yes_win_rate ?? 0) : 0,
+    test: hasSplits ? r1(splitBuckets.test[i]?.yes_win_rate ?? 0) : 0,
+    validation: hasSplits ? r1(splitBuckets.validation[i]?.yes_win_rate ?? 0) : 0,
     n_markets: b.n_markets,
   }));
 
