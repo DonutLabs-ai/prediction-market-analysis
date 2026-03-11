@@ -1,0 +1,71 @@
+{
+  "total_iterations": 50,
+  "category_states": {
+    "crypto": {
+      "num_buckets": 20,
+      "significance_level": 0.05,
+      "min_edge": 0.046,
+      "use_own_table": false,
+      "best_composite": 0.829205,
+      "experiments_run": 8
+    },
+    "politics": {
+      "num_buckets": 20,
+      "significance_level": 0.05,
+      "min_edge": 0.0111,
+      "use_own_table": false,
+      "best_composite": 0.775396,
+      "experiments_run": 7
+    },
+    "finance": {
+      "num_buckets": 7,
+      "significance_level": 0.05,
+      "min_edge": 0.0,
+      "use_own_table": false,
+      "best_composite": 0.75641,
+      "experiments_run": 7
+    },
+    "sports": {
+      "num_buckets": 7,
+      "significance_level": 0.05,
+      "min_edge": 0.0,
+      "use_own_table": false,
+      "best_composite": 0.755033,
+      "experiments_run": 7
+    },
+    "tech": {
+      "num_buckets": 10,
+      "significance_level": 0.05,
+      "min_edge": 0.0,
+      "use_own_table": false,
+      "best_composite": 0.752522,
+      "experiments_run": 7
+    },
+    "entertainment": {
+      "num_buckets": 7,
+      "significance_level": 0.05,
+      "min_edge": 0.0,
+      "use_own_table": false,
+      "best_composite": 0.754552,
+      "experiments_run": 7
+    },
+    "other": {
+      "num_buckets": 20,
+      "significance_level": 0.05,
+      "min_edge": 0.0555,
+      "use_own_table": true,
+      "best_composite": 0.814088,
+      "experiments_run": 7
+    }
+  },
+  "validation": {
+    "composite": 0.80185,
+    "brier": 0.02725,
+    "bet_rate": 0.587415,
+    "total_pnl": 387808.89,
+    "total_cost": 1615491.11,
+    "roi": 0.2401,
+    "num_bets": 21154,
+    "num_wins": 20033
+  }
+}

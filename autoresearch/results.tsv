@@ -1,0 +1,58 @@
+iter	category	param	old	new	composite	delta	status	description
+0	crypto	baseline	-	-	0.818452	+0.000000	keep	global 10-bucket baseline
+0	politics	baseline	-	-	0.760959	+0.000000	keep	global 10-bucket baseline
+0	finance	baseline	-	-	0.756337	+0.000000	keep	global 10-bucket baseline
+0	sports	baseline	-	-	0.755029	+0.000000	keep	global 10-bucket baseline
+0	tech	baseline	-	-	0.752522	+0.000000	keep	global 10-bucket baseline
+0	entertainment	baseline	-	-	0.754407	+0.000000	keep	global 10-bucket baseline
+0	other	baseline	-	-	0.781105	+0.000000	keep	global 10-bucket baseline
+1	crypto	num_buckets	10	7	0.817894	-0.000558	discard	10 -> 7 buckets
+2	politics	min_edge	0.0	0.0111	0.775334	+0.014375	keep	min_edge 0.0000 -> 0.0111
+3	finance	num_buckets	10	7	0.756410	+0.000073	keep	10 -> 7 buckets
+4	sports	use_own_table	False	True	0.753413	-0.001616	discard	own_table F->T
+5	tech	num_buckets	10	7	0.752514	-0.000008	discard	10 -> 7 buckets
+6	entertainment	num_buckets	10	7	0.754552	+0.000145	keep	10 -> 7 buckets
+7	other	significance_level	0.05	0.01	0.781105	+0.000000	discard	sig 0.05 -> 0.01
+8	crypto	significance_level	0.05	0.1	0.818452	+0.000000	discard	sig 0.05 -> 0.1
+9	politics	significance_level	0.05	0.1	0.775334	+0.000000	discard	sig 0.05 -> 0.1
+10	finance	min_edge	0.0	0.0252	0.642203	-0.114207	discard	min_edge 0.0000 -> 0.0252
+11	sports	significance_level	0.05	0.1	0.755029	+0.000000	discard	sig 0.05 -> 0.1
+12	tech	min_edge	0.0	0.0119	0.605320	-0.147202	discard	min_edge 0.0000 -> 0.0119
+13	entertainment	min_edge	0.0	0.0076	0.653607	-0.100945	discard	min_edge 0.0000 -> 0.0076
+14	other	min_edge	0.0	0.0262	0.802480	+0.021375	keep	min_edge 0.0000 -> 0.0262
+15	crypto	num_buckets	10	20	0.818755	+0.000303	keep	10 -> 20 buckets
+16	politics	num_buckets	10	20	0.775396	+0.000062	keep	10 -> 20 buckets
+17	finance	num_buckets	7	20	0.756346	-0.000064	discard	7 -> 20 buckets
+18	sports	min_edge	0.0	0.0194	0.625844	-0.129185	discard	min_edge 0.0000 -> 0.0194
+19	tech	num_buckets	10	7	0.752514	-0.000008	discard	10 -> 7 buckets
+20	entertainment	min_edge	0.0	0.0296	0.617150	-0.137402	discard	min_edge 0.0000 -> 0.0296
+21	other	num_buckets	10	20	0.806915	+0.004435	keep	10 -> 20 buckets
+22	crypto	min_edge	0.0	0.0163	0.827380	+0.008625	keep	min_edge 0.0000 -> 0.0163
+23	politics	significance_level	0.05	0.1	0.775396	+0.000000	discard	sig 0.05 -> 0.1
+24	finance	min_edge	0.0	0.0102	0.660068	-0.096342	discard	min_edge 0.0000 -> 0.0102
+25	sports	num_buckets	10	7	0.755033	+0.000004	keep	10 -> 7 buckets
+26	tech	significance_level	0.05	0.01	0.752522	+0.000000	discard	sig 0.05 -> 0.01
+27	entertainment	use_own_table	False	True	0.752061	-0.002491	discard	own_table F->T
+28	other	use_own_table	False	True	0.812213	+0.005298	keep	own_table F->T
+29	crypto	min_edge	0.0163	0.046	0.829205	+0.001825	keep	min_edge 0.0163 -> 0.0460
+30	politics	significance_level	0.05	0.1	0.775396	+0.000000	discard	sig 0.05 -> 0.1
+31	finance	num_buckets	7	10	0.756337	-0.000073	discard	7 -> 10 buckets
+32	sports	num_buckets	7	20	0.755031	-0.000002	discard	7 -> 20 buckets
+33	tech	use_own_table	False	True	0.751133	-0.001389	discard	own_table F->T
+34	entertainment	min_edge	0.0	0.0067	0.657052	-0.097500	discard	min_edge 0.0000 -> 0.0067
+35	other	min_edge	0.0262	0.0159	0.804513	-0.007700	discard	min_edge 0.0262 -> 0.0159
+36	crypto	use_own_table	False	True	0.829103	-0.000102	discard	own_table F->T
+37	politics	significance_level	0.05	0.1	0.775396	+0.000000	discard	sig 0.05 -> 0.1
+38	finance	significance_level	0.05	0.01	0.756410	+0.000000	discard	sig 0.05 -> 0.01
+39	sports	min_edge	0.0	0.0237	0.625218	-0.129815	discard	min_edge 0.0000 -> 0.0237
+40	tech	use_own_table	False	True	0.751133	-0.001389	discard	own_table F->T
+41	entertainment	min_edge	0.0	0.0105	0.637208	-0.117344	discard	min_edge 0.0000 -> 0.0105
+42	other	use_own_table	True	False	0.806915	-0.005298	discard	own_table T->F
+43	crypto	num_buckets	20	7	0.828244	-0.000961	discard	20 -> 7 buckets
+44	politics	num_buckets	20	7	0.775321	-0.000075	discard	20 -> 7 buckets
+45	finance	significance_level	0.05	0.1	0.756410	+0.000000	discard	sig 0.05 -> 0.1
+46	sports	num_buckets	7	20	0.755031	-0.000002	discard	7 -> 20 buckets
+47	tech	use_own_table	False	True	0.751133	-0.001389	discard	own_table F->T
+48	entertainment	use_own_table	False	True	0.752061	-0.002491	discard	own_table F->T
+49	other	min_edge	0.0262	0.0555	0.814088	+0.001875	keep	min_edge 0.0262 -> 0.0555
+50	crypto	num_buckets	20	7	0.828244	-0.000961	discard	20 -> 7 buckets
