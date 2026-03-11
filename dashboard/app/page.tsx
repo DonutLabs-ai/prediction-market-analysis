@@ -56,8 +56,8 @@ export default function Home() {
         <CategoryBreakdown states={learning.category_states} />
       </Section>
 
-      <Section title="Calibration Curve" desc="The core insight: market prices vs actual outcomes across 180K markets">
-        <CalibrationCurve buckets={calibration.buckets} />
+      <Section title="Perception vs Reality" desc="The core insight: market prices vs actual outcomes across 180K markets, verified across 3 independent time periods">
+        <CalibrationCurve buckets={calibration.buckets} splitBuckets={calibration.perception_vs_reality_by_split} />
       </Section>
 
       <Section title="Bucket Performance" desc="Per-bucket calibration data with category drill-down">

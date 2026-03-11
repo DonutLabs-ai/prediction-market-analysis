@@ -49,6 +49,20 @@ export interface CalibrationBucket {
   n_markets: number;
 }
 
+export interface SplitDateRange {
+  earliest: string;
+  latest: string;
+}
+
+export interface StabilityRow {
+  price_lo: number;
+  price_hi: number;
+  train: number;
+  test: number;
+  validation: number;
+  max_diff: number;
+}
+
 export interface Methodology {
   window_blocks: number;
   min_volume: number;
@@ -57,12 +71,16 @@ export interface Methodology {
   p80_cutoff: string;
   split_yes_rates: Record<string, number>;
   num_buckets: number;
+  split_date_ranges?: Record<string, SplitDateRange>;
 }
 
 export interface CalibrationData {
   total_markets: number;
   split_counts: Record<string, number>;
+  split_date_ranges: Record<string, SplitDateRange>;
   buckets: CalibrationBucket[];
+  perception_vs_reality_by_split: Record<string, CalibrationBucket[]>;
+  stability_check: StabilityRow[];
   category_buckets: Record<string, CalibrationBucket[]>;
   methodology: Methodology;
 }

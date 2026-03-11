@@ -209,7 +209,7 @@ def apply_split(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
 
 
 # ---------------------------------------------------------------------------
-# Phase 3: Bucket Calibration Curve
+# Phase 3: Perception vs Reality Curve
 # ---------------------------------------------------------------------------
 
 def build_calibration_table(
@@ -217,7 +217,7 @@ def build_calibration_table(
     bucket_edges: list[int],
     price_col: str = "yes_price",
 ) -> list[dict]:
-    """Build calibration table from train set."""
+    """Build Perception vs Reality table from train set."""
     train = df[df["split"] == "train"].copy()
     prices_pct = train[price_col] * 100  # convert to percentage
 
@@ -249,6 +249,58 @@ def build_calibration_table(
         result = binomtest(n_yes, n_markets, implied_prob if implied_prob > 0 else 0.001)
         p_value = result.pvalue
         significant = p_value < SIGNIFICANCE_LEVEL
+
+        if not significant:
+            shift = 0.0
+
+        table.append({
+            "price_lo": lo, "price_hi": hi,
+            "midpoint": midpoint, "implied_prob": round(implied_prob, 4),
+            "yes_win_rate": round(yes_win_rate, 4),
+            "shift": round(shift, 4),
+            "n_markets": n_markets, "p_value": round(p_value, 6),
+            "significant": significant,
+        })
+
+    return table
+
+
+def build_calibration_table_from_subset(
+    df: pd.DataFrame,
+    bucket_edges: list[int],
+    price_col: str = "yes_price",
+    significance_level: float = SIGNIFICANCE_LEVEL,
+) -> list[dict]:
+    """Build calibration table from any DataFrame subset (no split filtering)."""
+    prices_pct = df[price_col] * 100
+
+    table = []
+    for i in range(len(bucket_edges) - 1):
+        lo = bucket_edges[i]
+        hi = bucket_edges[i + 1]
+        midpoint = (lo + hi) / 2
+        implied_prob = midpoint / 100
+
+        mask = (prices_pct >= lo) & (prices_pct < hi)
+        bucket_markets = df[mask]
+        n_markets = len(bucket_markets)
+
+        if n_markets == 0:
+            table.append({
+                "price_lo": lo, "price_hi": hi,
+                "midpoint": midpoint, "implied_prob": round(implied_prob, 4),
+                "yes_win_rate": None, "shift": 0.0,
+                "n_markets": 0, "p_value": None, "significant": False,
+            })
+            continue
+
+        n_yes = int(bucket_markets["outcome"].sum())
+        yes_win_rate = n_yes / n_markets
+        shift = yes_win_rate - implied_prob
+
+        result = binomtest(n_yes, n_markets, implied_prob if implied_prob > 0 else 0.001)
+        p_value = result.pvalue
+        significant = p_value < significance_level
 
         if not significant:
             shift = 0.0
@@ -311,9 +363,9 @@ def run_all(
     print("=" * 60)
     df, split_meta = apply_split(df)
 
-    # Phase 3: Calibration table
+    # Phase 3: Perception vs Reality Curve (all splits)
     print("\n" + "=" * 60)
-    print("PHASE 3: Bucket calibration curve (train set only)")
+    print("PHASE 3: Perception vs Reality Curve")
     print("=" * 60)
 
     if num_buckets not in BUCKET_CONFIGS:
@@ -321,16 +373,63 @@ def run_all(
         num_buckets = 10
     bucket_edges = BUCKET_CONFIGS[num_buckets]
 
-    calibration_table = build_calibration_table(df, bucket_edges, price_col="yes_price")
+    # Build curves for all 3 splits to confirm distribution stability
+    split_tables = {}
+    for split_name in ["train", "test", "validation"]:
+        subset = df[df["split"] == split_name]
+        table = build_calibration_table_from_subset(subset, bucket_edges, price_col="yes_price")
+        split_tables[split_name] = table
 
-    # Print calibration results
-    print(f"\nCalibration table ({num_buckets} buckets, late-stage VWAP):")
-    print(f"{'Bucket':>10} {'N':>6} {'WinRate':>8} {'Implied':>8} {'Shift':>7} {'Sig':>4}")
-    for b in calibration_table:
-        wr = f"{b['yes_win_rate']:.4f}" if b["yes_win_rate"] is not None else "   N/A"
-        sig = "Y" if b["significant"] else "N"
-        print(f"  [{b['price_lo']:>2}-{b['price_hi']:>3}) {b['n_markets']:>6} {wr:>8} "
-              f"{b['implied_prob']:>8.4f} {b['shift']:>+7.4f} {sig:>4}")
+    # Print per-split curves
+    for split_name in ["train", "test", "validation"]:
+        table = split_tables[split_name]
+        n_total = sum(b["n_markets"] for b in table)
+        print(f"\n  {split_name.upper()} Perception vs Reality ({n_total} markets):")
+        print(f"  {'Bucket':>10} {'N':>6} {'Perception':>11} {'Reality':>8} {'Shift':>7} {'Sig':>4}")
+        for b in table:
+            wr = f"{b['yes_win_rate']:.4f}" if b["yes_win_rate"] is not None else "   N/A"
+            sig = "Y" if b["significant"] else "N"
+            print(f"    [{b['price_lo']:>2}-{b['price_hi']:>3}) {b['n_markets']:>6} "
+                  f"{b['implied_prob']:>11.4f} {wr:>8} {b['shift']:>+7.4f} {sig:>4}")
+
+    # Check distribution stability: compare win rates across splits
+    print("\n  Distribution stability check (Reality per bucket across splits):")
+    print(f"  {'Bucket':>10} {'Train':>8} {'Test':>8} {'Valid':>8} {'MaxDiff':>8}")
+    max_drift = 0.0
+    for i in range(len(bucket_edges) - 1):
+        lo = bucket_edges[i]
+        hi = bucket_edges[i + 1]
+        rates = []
+        for split_name in ["train", "test", "validation"]:
+            wr = split_tables[split_name][i]["yes_win_rate"]
+            rates.append(wr)
+        valid_rates = [r for r in rates if r is not None]
+        if len(valid_rates) >= 2:
+            diff = max(valid_rates) - min(valid_rates)
+            max_drift = max(max_drift, diff)
+        else:
+            diff = 0.0
+        rate_strs = [f"{r:.4f}" if r is not None else "   N/A" for r in rates]
+        print(f"    [{lo:>2}-{hi:>3}) {rate_strs[0]:>8} {rate_strs[1]:>8} {rate_strs[2]:>8} {diff:>+8.4f}")
+
+    if max_drift > 0.10:
+        print(f"  WARNING: max bucket drift {max_drift:.4f} > 0.10 — distribution may have shifted")
+    else:
+        print(f"  OK: max bucket drift {max_drift:.4f} <= 0.10 — distribution stable across splits")
+
+    # Use train set as the primary calibration table
+    calibration_table = split_tables["train"]
+
+    # Compute split date ranges
+    split_date_ranges = {}
+    for split_name in ["train", "test", "validation"]:
+        subset = df[df["split"] == split_name]
+        dates = subset["end_date"].dropna()
+        if len(dates) > 0:
+            split_date_ranges[split_name] = {
+                "earliest": str(dates.min()),
+                "latest": str(dates.max()),
+            }
 
     # Save calibration table with metadata
     output = {
@@ -342,12 +441,16 @@ def run_all(
         "total_markets": len(df),
         "train_markets": int((df["split"] == "train").sum()),
         **split_meta,
+        "split_date_ranges": split_date_ranges,
         "buckets": calibration_table,
+        "perception_vs_reality_by_split": {
+            name: tbl for name, tbl in split_tables.items()
+        },
     }
 
     OUTPUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_JSON.write_text(json.dumps(output, indent=2, default=str) + "\n")
-    print(f"\nSaved calibration table to {OUTPUT_JSON}")
+    print(f"\nSaved Perception vs Reality curves to {OUTPUT_JSON}")
 
     return output
 

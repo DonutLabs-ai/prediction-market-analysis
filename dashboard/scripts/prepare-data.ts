@@ -49,37 +49,63 @@ console.log("learning.json: copied");
 const calRaw = JSON.parse(
   readFileSync(join(ROOT, "autoresearch/calibration_table.json"), "utf-8")
 );
+
+const slimBucket = (b: Record<string, unknown>) => ({
+  price_lo: b.price_lo,
+  price_hi: b.price_hi,
+  implied_prob: b.implied_prob,
+  yes_win_rate: b.yes_win_rate,
+  shift: b.shift,
+  n_markets: b.n_markets,
+});
+
+// Build category_buckets from category_configs if present
+const categoryBuckets: Record<string, unknown[]> = {};
+if (calRaw.category_configs) {
+  for (const [cat, cfg] of Object.entries(calRaw.category_configs)) {
+    categoryBuckets[cat] = ((cfg as Record<string, unknown>).calibration_table as Record<string, unknown>[]).map(slimBucket);
+  }
+}
+
+// Build per-split Perception vs Reality curves
+const splitBuckets: Record<string, unknown[]> = {};
+if (calRaw.perception_vs_reality_by_split) {
+  for (const [split, buckets] of Object.entries(calRaw.perception_vs_reality_by_split)) {
+    splitBuckets[split] = (buckets as Record<string, unknown>[]).map(slimBucket);
+  }
+}
+
+// Build stability check
+const stabilityCheck: unknown[] = [];
+if (calRaw.perception_vs_reality_by_split && calRaw.bucket_edges) {
+  const edges = calRaw.bucket_edges as number[];
+  for (let i = 0; i < edges.length - 1; i++) {
+    const splits = calRaw.perception_vs_reality_by_split as Record<string, Record<string, unknown>[]>;
+    const rates: Record<string, number | null> = {};
+    for (const s of ["train", "test", "validation"]) {
+      rates[s] = splits[s]?.[i]?.yes_win_rate as number | null;
+    }
+    const valid = Object.values(rates).filter((v): v is number => v != null);
+    const maxDiff = valid.length >= 2 ? Math.max(...valid) - Math.min(...valid) : 0;
+    stabilityCheck.push({
+      price_lo: edges[i],
+      price_hi: edges[i + 1],
+      train: rates.train,
+      test: rates.test,
+      validation: rates.validation,
+      max_diff: Math.round(maxDiff * 10000) / 10000,
+    });
+  }
+}
+
 const calibration = {
   total_markets: calRaw.total_markets,
   split_counts: calRaw.split_counts,
-  buckets: calRaw.buckets.map(
-    (b: Record<string, unknown>) => ({
-      price_lo: b.price_lo,
-      price_hi: b.price_hi,
-      implied_prob: b.implied_prob,
-      yes_win_rate: b.yes_win_rate,
-      shift: b.shift,
-      n_markets: b.n_markets,
-    })
-  ),
-  category_buckets: Object.fromEntries(
-    Object.entries(calRaw.category_configs).map(
-      ([cat, cfg]: [string, Record<string, unknown>]) => [
-        cat,
-        (cfg.calibration_table as Record<string, unknown>[]).map(
-          (b) => ({
-            price_lo: b.price_lo,
-            price_hi: b.price_hi,
-            implied_prob: b.implied_prob,
-            yes_win_rate: b.yes_win_rate,
-            shift: b.shift,
-            n_markets: b.n_markets,
-          })
-        ),
-      ]
-    )
-  ),
-  // Methodology fields
+  split_date_ranges: calRaw.split_date_ranges || {},
+  buckets: calRaw.buckets.map(slimBucket),
+  perception_vs_reality_by_split: splitBuckets,
+  stability_check: stabilityCheck,
+  category_buckets: categoryBuckets,
   methodology: {
     window_blocks: calRaw.window_blocks,
     min_volume: calRaw.min_volume,
@@ -88,6 +114,7 @@ const calibration = {
     p80_cutoff: calRaw.p80_cutoff,
     split_yes_rates: calRaw.split_yes_rates,
     num_buckets: calRaw.num_buckets,
+    split_date_ranges: calRaw.split_date_ranges || {},
   },
 };
 writeFileSync(join(OUT, "calibration.json"), JSON.stringify(calibration, null, 2));
