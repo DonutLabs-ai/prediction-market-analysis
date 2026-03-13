@@ -3,6 +3,7 @@ markets.jsonl
 predictions.jsonl
 experiment_runs.jsonl
 research_outcomes.json
+calibration_table.json
 market_descriptions.parquet
 market_calibration.parquet
 
