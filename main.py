@@ -92,13 +92,38 @@ def analyze(name: str | None = None):
             print(f"  {fmt}: {path}")
 
 
-def index():
-    """Interactive indexer selection menu."""
+def index(name: str | None = None):
+    """Run indexer by name or show interactive menu."""
     indexers = Indexer.load()
 
     if not indexers:
         print("No indexers found in src/indexers/")
         return
+
+    if name:
+        if name == "all":
+            print("\nRunning all indexers...\n")
+            for indexer_cls in indexers:
+                instance = indexer_cls()
+                print(f"Running: {instance.name}")
+                instance.run()
+                print(f"  {instance.name} complete.")
+            print("\nAll indexers complete.")
+            return
+
+        for indexer_cls in indexers:
+            instance = indexer_cls()
+            if instance.name == name:
+                print(f"\nRunning: {instance.name}\n")
+                instance.run()
+                print("\nIndexer complete.")
+                return
+
+        print(f"Indexer '{name}' not found. Available indexers:")
+        for indexer_cls in indexers:
+            instance = indexer_cls()
+            print(f"  - {instance.name}")
+        sys.exit(1)
 
     # Build menu options
     options = []
@@ -146,7 +171,8 @@ def main():
         sys.exit(0)
 
     if command == "index":
-        index()
+        name = sys.argv[2] if len(sys.argv) > 2 else None
+        index(name)
         sys.exit(0)
 
     if command == "package":

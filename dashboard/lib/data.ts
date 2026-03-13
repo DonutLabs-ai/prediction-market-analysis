@@ -1,6 +1,7 @@
 import resultsData from "@/public/data/results.json";
 import learningData from "@/public/data/learning.json";
 import calibrationData from "@/public/data/calibration.json";
+import researchData from "@/public/data/research.json";
 
 export interface ExperimentRow {
   iter: number;
@@ -89,6 +90,36 @@ export interface CalibrationData {
   methodology: Methodology;
 }
 
+export interface FilterStats {
+  total_closed: number;
+  decisive_outcome: number;
+  settled_5050: number;
+  multi_outcome_removed: number;
+  final_dataset: number;
+}
+
+export interface ExpiryBand {
+  label: string;
+  count: number;
+  yes_rate: number | null;
+  median_price: number | null;
+}
+
+export interface ExpiryStats {
+  total_with_dte: number;
+  total_missing_dte: number;
+  median_days: number;
+  p25_days: number;
+  p75_days: number;
+}
+
+export interface ResearchData {
+  filters: FilterStats;
+  expiry_distribution: ExpiryBand[];
+  calibration_by_expiry: Record<string, CalibrationBucket[]>;
+  expiry_stats: ExpiryStats;
+}
+
 export const CATEGORY_COLORS: Record<string, string> = {
   crypto: "#f59e0b",
   politics: "#3b82f6",
@@ -124,4 +155,8 @@ export function getLearning(): LearningResults {
 
 export function getCalibration(): CalibrationData {
   return calibrationData as CalibrationData;
+}
+
+export function getResearch(): ResearchData {
+  return researchData as ResearchData;
 }

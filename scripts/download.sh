@@ -11,19 +11,40 @@ if [ -d "$DATA_DIR" ]; then
     exit 0
 fi
 
-# Download file using best available tool
+# Download file using best available tool.
+# This server does NOT support HTTP Range, so resume is not possible.
+# Use curl by default. Set USE_ARIA2=1 to use aria2c; set ARIA2_SINGLE=1 to use
+# one connection (avoids TLS handshake errors on some networks).
 download() {
-    if command -v aria2c &> /dev/null; then
-        echo "Downloading with aria2c..."
-        aria2c -x 16 -s 16 -o "$OUTPUT_FILE" "$URL"
+    if [ -n "${USE_ARIA2:-}" ] && command -v aria2c &> /dev/null; then
+        if [ -n "${ARIA2_SINGLE:-}" ]; then
+            echo "Downloading with aria2c (single connection, USE_ARIA2=1 ARIA2_SINGLE=1)..."
+            aria2c -x 1 -s 1 -o "$OUTPUT_FILE" "$URL"
+        else
+            echo "Downloading with aria2c (USE_ARIA2=1)..."
+            aria2c -x 16 -s 16 -o "$OUTPUT_FILE" "$URL"
+        fi
     elif command -v curl &> /dev/null; then
-        echo "aria2c not found, falling back to curl..."
-        curl -L -o "$OUTPUT_FILE" "$URL"
+        if [ -s "$OUTPUT_FILE" ]; then
+            echo "Resuming download with curl (partial file found)..."
+            curl -L -C - -o "$OUTPUT_FILE" "$URL"
+        else
+            echo "Downloading with curl..."
+            curl -L -o "$OUTPUT_FILE" "$URL"
+        fi
+    elif command -v aria2c &> /dev/null; then
+        if [ -n "${ARIA2_SINGLE:-}" ]; then
+            echo "Using aria2c (single connection)..."
+            aria2c -x 1 -s 1 -o "$OUTPUT_FILE" "$URL"
+        else
+            echo "curl not found, using aria2c..."
+            aria2c -x 16 -s 16 -o "$OUTPUT_FILE" "$URL"
+        fi
     elif command -v wget &> /dev/null; then
-        echo "aria2c and curl not found, falling back to wget..."
+        echo "Using wget..."
         wget -O "$OUTPUT_FILE" "$URL"
     else
-        echo "Error: No download tool available (aria2c, curl, or wget required)."
+        echo "Error: No download tool available (curl, aria2c, or wget required)."
         exit 1
     fi
 }

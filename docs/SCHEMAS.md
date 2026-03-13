@@ -64,6 +64,8 @@ Each row represents a prediction market.
 | `closed` | bool | Is market closed |
 | `end_date` | datetime (nullable) | When market ends |
 | `created_at` | datetime (nullable) | When market was created |
+| `description` | string (nullable) | Market description including settlement conditions |
+| `resolution_source` | string (nullable) | URL of the resolution data source |
 | `_fetched_at` | datetime | When this record was fetched |
 
 ## Polymarket Trades

@@ -19,6 +19,9 @@ class Market:
     end_date: Optional[datetime]
     created_at: Optional[datetime]
     market_maker_address: Optional[str] = None  # FPMM address for legacy markets
+    description: Optional[str] = None
+    resolution_source: Optional[str] = None
+    category: Optional[str] = None
 
     @classmethod
     def from_dict(cls, data: dict) -> "Market":
@@ -47,6 +50,9 @@ class Market:
             end_date=parse_time(data.get("endDate")),
             created_at=parse_time(data.get("createdAt")),
             market_maker_address=data.get("marketMakerAddress"),
+            description=data.get("description"),
+            resolution_source=data.get("resolutionSource"),
+            category=data.get("category"),
         )
 
 

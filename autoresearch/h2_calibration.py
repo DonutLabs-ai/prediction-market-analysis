@@ -29,6 +29,7 @@ LATE_VWAP_WINDOW_BLOCKS = 5000
 MIN_VOLUME = 1000.0
 MIN_LATE_TRADES = 5
 SIGNIFICANCE_LEVEL = 0.05
+MULTI_OUTCOME_THRESHOLD = 3  # Exclude event groups with more than this many markets
 
 BUCKET_CONFIGS = {
     7: [0, 15, 30, 40, 50, 65, 80, 100],
@@ -45,8 +46,13 @@ def build_market_calibration_dataset(
     window_blocks: int = LATE_VWAP_WINDOW_BLOCKS,
     min_volume: float = MIN_VOLUME,
     min_late_trades: int = MIN_LATE_TRADES,
+    multi_outcome_threshold: int = MULTI_OUTCOME_THRESHOLD,
 ) -> pd.DataFrame:
-    """Build one-row-per-market dataset with late-stage and full-lifecycle VWAP."""
+    """Build one-row-per-market dataset with late-stage and full-lifecycle VWAP.
+
+    Computes days_to_expiry (end_date - created_at) and excludes multi-outcome
+    event markets (>threshold markets sharing a 'win the X?' question pattern).
+    """
     con = duckdb.connect()
 
     query = f"""
@@ -57,7 +63,8 @@ def build_market_calibration_dataset(
             volume,
             TRIM(json_extract_string(clob_token_ids, '$[0]')) AS yes_token,
             CAST(json_extract_string(outcome_prices, '$[0]') AS DOUBLE) AS yes_final,
-            end_date
+            end_date,
+            created_at
         FROM '{MARKETS_GLOB}'
         WHERE closed = true
           AND volume >= {min_volume}
@@ -65,6 +72,29 @@ def build_market_calibration_dataset(
               CAST(json_extract_string(outcome_prices, '$[0]') AS DOUBLE) >= 0.99
               OR CAST(json_extract_string(outcome_prices, '$[0]') AS DOUBLE) <= 0.01
           )
+    ),
+    -- Detect multi-outcome events: markets sharing a 'win the X?' pattern
+    event_pattern AS (
+        SELECT market_id,
+               regexp_extract(LOWER(question), '(win the .+\\?)', 1) AS event_stem
+        FROM market_tokens
+    ),
+    multi_outcome_stems AS (
+        SELECT event_stem
+        FROM event_pattern
+        WHERE event_stem IS NOT NULL AND event_stem != ''
+        GROUP BY event_stem
+        HAVING COUNT(*) > {multi_outcome_threshold}
+    ),
+    multi_outcome_ids AS (
+        SELECT ep.market_id
+        FROM event_pattern ep
+        JOIN multi_outcome_stems ms ON ep.event_stem = ms.event_stem
+    ),
+    filtered_tokens AS (
+        SELECT mt.*
+        FROM market_tokens mt
+        WHERE mt.market_id NOT IN (SELECT market_id FROM multi_outcome_ids)
     ),
     all_trades AS (
         SELECT
@@ -82,7 +112,7 @@ def build_market_calibration_dataset(
     yes_trades AS (
         SELECT mt.market_id, t.block_number, t.price, t.token_volume
         FROM all_trades t
-        JOIN market_tokens mt ON t.token_id = mt.yes_token
+        JOIN filtered_tokens mt ON t.token_id = mt.yes_token
         WHERE t.price > 0 AND t.price < 1
     ),
     market_block_range AS (
@@ -113,6 +143,8 @@ def build_market_calibration_dataset(
         mt.question,
         mt.volume,
         mt.end_date,
+        mt.created_at,
+        ROUND(EXTRACT(EPOCH FROM (mt.end_date - mt.created_at)) / 86400.0, 2) AS days_to_expiry,
         ROUND(lv.late_vwap, 4) AS yes_price,
         ROUND(fv.full_vwap, 4) AS full_vwap,
         CASE WHEN mt.yes_final >= 0.99 THEN 1 ELSE 0 END AS outcome,
@@ -120,7 +152,7 @@ def build_market_calibration_dataset(
         fv.full_trade_count,
         mbr.last_block,
         mbr.window_start
-    FROM market_tokens mt
+    FROM filtered_tokens mt
     JOIN late_vwap lv ON mt.market_id = lv.market_id
     JOIN full_vwap fv ON mt.market_id = fv.market_id
     JOIN market_block_range mbr ON mt.market_id = mbr.market_id
@@ -131,7 +163,6 @@ def build_market_calibration_dataset(
     df = con.execute(query).df()
     con.close()
 
-    n_dropped = 0
     if len(df) == 0:
         print("WARNING: No markets matched the criteria!")
     else:
@@ -143,6 +174,13 @@ def build_market_calibration_dataset(
               f"median={df['yes_price'].median():.4f}, max={df['yes_price'].max():.4f}")
         print(f"  full_vwap:             min={df['full_vwap'].min():.4f}, "
               f"median={df['full_vwap'].median():.4f}, max={df['full_vwap'].max():.4f}")
+        dte = df["days_to_expiry"].dropna()
+        if len(dte) > 0:
+            print(f"  days_to_expiry:        min={dte.min():.1f}, "
+                  f"median={dte.median():.1f}, max={dte.max():.1f}")
+        n_no_dte = df["days_to_expiry"].isna().sum()
+        if n_no_dte > 0:
+            print(f"  ({n_no_dte} markets missing created_at, days_to_expiry=NaN)")
 
     return df
 

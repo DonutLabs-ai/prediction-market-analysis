@@ -1,4 +1,4 @@
-import { getResults, getLearning, getCalibration } from "@/lib/data";
+import { getResults, getLearning, getCalibration, getResearch } from "@/lib/data";
 import HeroMetrics from "@/components/HeroMetrics";
 import LearningTimeline from "@/components/LearningTimeline";
 import ExperimentLog from "@/components/ExperimentLog";
@@ -8,6 +8,7 @@ import CalibrationCurve from "@/components/CalibrationCurve";
 import BucketPerformance from "@/components/BucketPerformance";
 import StrategyCode from "@/components/StrategyCode";
 import Methodology from "@/components/Methodology";
+import ResearchOutcomes from "@/components/ResearchOutcomes";
 
 function Section({
   title,
@@ -33,6 +34,7 @@ export default function Home() {
   const results = getResults();
   const learning = getLearning();
   const calibration = getCalibration();
+  const research = getResearch();
 
   return (
     <main className="mx-auto max-w-7xl space-y-16 px-6 py-12">
@@ -58,6 +60,10 @@ export default function Home() {
 
       <Section title="Perception vs Reality" desc="The core insight: market prices vs actual outcomes across 180K markets, verified across 3 independent time periods">
         <CalibrationCurve buckets={calibration.buckets} splitBuckets={calibration.perception_vs_reality_by_split} />
+      </Section>
+
+      <Section title="Expiry Analysis" desc="How time-to-expiry affects market calibration and mispricing edge">
+        <ResearchOutcomes research={research} />
       </Section>
 
       <Section title="Bucket Performance" desc="Per-bucket calibration data with category drill-down">

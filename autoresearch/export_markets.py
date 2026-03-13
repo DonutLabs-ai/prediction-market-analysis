@@ -15,11 +15,15 @@ import sys
 from pathlib import Path
 
 import duckdb
+import pandas as pd
+
+from src.indexers.polymarket.events import resolve_category
 
 MARKETS_GLOB = "data/polymarket/markets/*.parquet"
 TRADES_GLOB = "data/polymarket/trades/trades_*_*.parquet"
 LATE_VWAP_WINDOW_BLOCKS = 5000
 MIN_LATE_TRADES = 5
+MULTI_OUTCOME_THRESHOLD = 3  # Exclude event groups with more than this many markets
 
 
 def export_markets(
@@ -28,7 +32,10 @@ def export_markets(
     min_volume: float = 1000.0,
     window_blocks: int = LATE_VWAP_WINDOW_BLOCKS,
 ) -> int:
-    """Export resolved markets with late-stage VWAP yes_price to JSONL."""
+    """Export resolved markets with late-stage VWAP yes_price to JSONL.
+
+    Excludes multi-outcome event markets and includes days_to_expiry.
+    """
     con = duckdb.connect()
 
     query = f"""
@@ -37,8 +44,11 @@ def export_markets(
             id AS market_id,
             question,
             volume,
+            category,
             TRIM(json_extract_string(clob_token_ids, '$[0]')) AS yes_token,
             CAST(json_extract_string(outcome_prices, '$[0]') AS DOUBLE) AS yes_final,
+            end_date,
+            created_at
         FROM '{MARKETS_GLOB}'
         WHERE closed = true
           AND volume >= {min_volume}
@@ -46,6 +56,29 @@ def export_markets(
               CAST(json_extract_string(outcome_prices, '$[0]') AS DOUBLE) >= 0.99
               OR CAST(json_extract_string(outcome_prices, '$[0]') AS DOUBLE) <= 0.01
           )
+    ),
+    -- Detect multi-outcome events: markets sharing a 'win the X?' pattern
+    event_pattern AS (
+        SELECT market_id,
+               regexp_extract(LOWER(question), '(win the .+\\?)', 1) AS event_stem
+        FROM market_tokens
+    ),
+    multi_outcome_stems AS (
+        SELECT event_stem
+        FROM event_pattern
+        WHERE event_stem IS NOT NULL AND event_stem != ''
+        GROUP BY event_stem
+        HAVING COUNT(*) > {MULTI_OUTCOME_THRESHOLD}
+    ),
+    multi_outcome_ids AS (
+        SELECT ep.market_id
+        FROM event_pattern ep
+        JOIN multi_outcome_stems ms ON ep.event_stem = ms.event_stem
+    ),
+    filtered_tokens AS (
+        SELECT mt.*
+        FROM market_tokens mt
+        WHERE mt.market_id NOT IN (SELECT market_id FROM multi_outcome_ids)
     ),
     all_trades AS (
         SELECT
@@ -63,7 +96,7 @@ def export_markets(
     yes_trades AS (
         SELECT mt.market_id, t.block_number, t.price, t.token_volume
         FROM all_trades t
-        JOIN market_tokens mt ON t.token_id = mt.yes_token
+        JOIN filtered_tokens mt ON t.token_id = mt.yes_token
         WHERE t.price > 0 AND t.price < 1
     ),
     market_block_range AS (
@@ -85,15 +118,17 @@ def export_markets(
     SELECT
         mt.market_id,
         mt.question,
+        mt.category,
         mt.volume,
         ROUND(v.yes_vwap, 4) AS yes_price,
         CASE WHEN mt.yes_final >= 0.99 THEN 1 ELSE 0 END AS outcome,
-        v.trade_count
-    FROM market_tokens mt
+        v.trade_count,
+        ROUND(EXTRACT(EPOCH FROM (mt.end_date - mt.created_at)) / 86400.0, 2) AS days_to_expiry
+    FROM filtered_tokens mt
     JOIN late_vwap v ON mt.market_id = v.market_id
     WHERE v.yes_vwap > 0 AND v.yes_vwap < 1
       AND v.trade_count >= {MIN_LATE_TRADES}
-    ORDER BY mt.volume DESC
+    ORDER BY hash(mt.market_id || '42')
     LIMIT {limit}
     """
 
@@ -102,27 +137,33 @@ def export_markets(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as f:
         for _, row in df.iterrows():
-            f.write(json.dumps({
+            record = {
                 "market_id": str(row["market_id"]),
                 "question": row["question"],
+                "category": resolve_category(row.get("category"), row["question"]),
                 "yes_price": float(row["yes_price"]),
                 "outcome": int(row["outcome"]),
                 "volume": round(float(row["volume"]), 2),
                 "trade_count": int(row["trade_count"]),
-            }, ensure_ascii=True) + "\n")
+                "days_to_expiry": round(float(row["days_to_expiry"]), 2) if pd.notna(row["days_to_expiry"]) else None,
+            }
+            f.write(json.dumps(record, ensure_ascii=True) + "\n")
 
     n_yes = int((df["outcome"] == 1).sum())
     n_no = int((df["outcome"] == 0).sum())
     print(f"Exported {len(df)} resolved markets to {output_path}")
     print(f"  outcomes: {n_yes} YES, {n_no} NO")
     print(f"  yes_price: min={df['yes_price'].min():.4f}, median={df['yes_price'].median():.4f}, max={df['yes_price'].max():.4f}")
+    dte = df["days_to_expiry"].dropna()
+    if len(dte) > 0:
+        print(f"  days_to_expiry: min={dte.min():.1f}, median={dte.median():.1f}, max={dte.max():.1f}")
     return len(df)
 
 
 def main() -> None:
     base = Path(__file__).parent
     output_path = base / "markets.jsonl"
-    limit = 2000
+    limit = 1000
     min_volume = 1000.0
     window_blocks = LATE_VWAP_WINDOW_BLOCKS
 

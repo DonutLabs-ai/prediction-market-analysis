@@ -119,3 +119,13 @@ const calibration = {
 };
 writeFileSync(join(OUT, "calibration.json"), JSON.stringify(calibration, null, 2));
 console.log("calibration.json: created");
+
+// 4. Copy research outcomes -> research.json
+const researchPath = join(ROOT, "autoresearch/research_outcomes.json");
+if (existsSync(researchPath)) {
+  const research = readFileSync(researchPath, "utf-8");
+  writeFileSync(join(OUT, "research.json"), research);
+  console.log("research.json: copied");
+} else {
+  console.log("research.json: skipped (autoresearch/research_outcomes.json not found)");
+}
