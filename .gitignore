@@ -33,7 +33,7 @@ output
 # Agent/tooling state
 .ralph/
 .ralphrc
-selfsearch/
+selfsearch/.env
 
 # Test outputs
 dashboard/test-results/
