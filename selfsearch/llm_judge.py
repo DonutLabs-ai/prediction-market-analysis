@@ -1,0 +1,367 @@
+"""LLM Judge 模块 - 阅读新闻/SEC filings 输出事件结果判断."""
+
+from __future__ import annotations
+
+import json
+import os
+import time
+from dataclasses import dataclass, asdict
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Optional, List
+
+import httpx
+
+# 配置
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
+if not OPENROUTER_API_KEY:
+    # 尝试从 .env 加载
+    from dotenv import load_dotenv
+    _dotenv_path = Path(__file__).parent / ".env"
+    load_dotenv(_dotenv_path)
+    OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+
+DEFAULT_MODEL = "anthropic/claude-haiku-4-5"  # 快速、便宜
+PRECISION_MODEL = "anthropic/claude-sonnet-4"  # 高准确率
+
+
+@dataclass
+class LLMJudgment:
+    """LLM 判断结果."""
+    event_id: str
+    llm_prediction: str  # "Yes" / "No" / "Uncertain"
+    confidence: float  # 0.0 - 1.0
+    reasoning: str
+    processing_time_sec: float
+    news_cutoff_time: Optional[str]
+    model_used: str
+    news_count: int
+    metadata: Optional[dict] = None
+
+
+class LLMJudge:
+    """LLM-powered 事件结果判断器."""
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = DEFAULT_MODEL,
+        base_url: str = OPENROUTER_BASE_URL,
+    ):
+        self.api_key = api_key or OPENROUTER_API_KEY
+        self.model = model
+        self.base_url = base_url
+        self.client = httpx.Client(
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "HTTP-Referer": "https://github.com/prediction-market-analysis",
+                "X-Title": "LLM vs Market Study",
+            },
+            timeout=60.0,
+        )
+
+    def judge_with_news(
+        self,
+        event_id: str,
+        question: str,
+        news_items: List[dict[str, Any]],
+        category: Optional[str] = None,
+        max_news: int = 10,
+    ) -> LLMJudgment:
+        """基于新闻/SEC filings 判断事件结果.
+
+        Args:
+            event_id: 事件 ID
+            question: 事件问题 (如 "Will SEC approve Bitcoin ETF by Jan 2024?")
+            news_items: 新闻列表，每项包含 {timestamp, source, text, url}
+            category: 事件类别 (politics/crypto/finance/sports)
+            max_news: 最多使用的新闻数量
+
+        Returns:
+            LLMJudgment 结果
+        """
+        start_time = time.time()
+
+        # 按时间排序新闻
+        sorted_news = sorted(
+            news_items,
+            key=lambda x: x.get("timestamp", ""),
+        )[:max_news]
+
+        # 构建 prompt
+        prompt = self._build_prompt(question, sorted_news, category)
+
+        # 调用 LLM
+        response = self._call_llm(prompt)
+        parsed = self._parse_response(response, question)
+
+        processing_time = time.time() - start_time
+
+        # 确定 news cutoff time
+        news_cutoff = sorted_news[-1].get("timestamp") if sorted_news else None
+
+        return LLMJudgment(
+            event_id=event_id,
+            llm_prediction=parsed["prediction"],
+            confidence=parsed["confidence"],
+            reasoning=parsed["reasoning"],
+            processing_time_sec=round(processing_time, 2),
+            news_cutoff_time=news_cutoff,
+            model_used=self.model,
+            news_count=len(sorted_news),
+            metadata={
+                "total_news_available": len(news_items),
+                "question": question,
+                "category": category,
+            },
+        )
+
+    def judge_sec_filing(
+        self,
+        event_id: str,
+        question: str,
+        sec_filings: List[dict[str, Any]],
+        category: str = "finance",
+    ) -> LLMJudgment:
+        """专门针对 SEC filings 的判断.
+
+        Args:
+            event_id: 事件 ID
+            question: 事件问题
+            sec_filings: SEC filings 列表，每项包含 {filing_date, form_type, items, text}
+            category: 类别
+
+        Returns:
+            LLMJudgment 结果
+        """
+        news_items = [
+            {
+                "timestamp": f.get("filing_date", ""),
+                "source": f"SEC {f.get('form_type', '')}",
+                "text": f.get("text", ""),
+                "url": f.get("primary_doc_url", ""),
+                "items": f.get("items", ""),
+            }
+            for f in sec_filings
+        ]
+        return self.judge_with_news(event_id, question, news_items, category)
+
+    def judge_batch(
+        self,
+        events: List[dict[str, Any]],
+        output_path: Optional[Path] = None,
+    ) -> List[LLMJudgment]:
+        """批量判断多个事件.
+
+        Args:
+            events: 事件列表，每项包含 {event_id, question, news_items, category}
+            output_path: 可选的输出文件路径
+
+        Returns:
+            LLMJudgment 列表
+        """
+        results = []
+        for i, event in enumerate(events):
+            print(f"[{i+1}/{len(events)}] Judging {event['event_id']}...")
+
+            try:
+                judgment = self.judge_with_news(
+                    event_id=event["event_id"],
+                    question=event.get("question", ""),
+                    news_items=event.get("news_items", []),
+                    category=event.get("category"),
+                )
+                results.append(judgment)
+
+                # 每 5 个保存一次
+                if output_path and (i + 1) % 5 == 0:
+                    self._save_results(results, output_path)
+
+            except Exception as e:
+                print(f"  Error: {e}")
+                # 继续处理下一个
+
+        if output_path:
+            self._save_results(results, output_path)
+
+        return results
+
+    def _build_prompt(
+        self,
+        question: str,
+        news_items: List[dict],
+        category: Optional[str],
+    ) -> List[dict]:
+        """构建 LLM prompt."""
+
+        system_prompt = f"""You are an expert prediction market analyst.
+Your task is to analyze news articles and SEC filings to determine the likely outcome of a binary event.
+
+You will be given:
+1. A question about a future event (Yes/No outcome)
+2. A list of news articles/filings in chronological order
+
+Your analysis should:
+- Carefully read each news item
+- Consider the credibility of sources
+- Weight recent information more heavily
+- Identify any definitive announcements vs. speculation
+
+Respond with:
+1. Your prediction: "Yes", "No", or "Uncertain" (if insufficient information)
+2. Confidence level: 0.0 to 1.0
+3. Brief reasoning (2-3 sentences) explaining your conclusion
+
+Category: {category or "general"}
+"""
+
+        # 格式化新闻
+        news_text = []
+        for i, item in enumerate(news_items, 1):
+            news_text.append(
+                f"[{i}] {item.get('timestamp', 'Unknown')} - {item.get('source', 'Unknown')}\n"
+                f"    {item.get('text', '')[:1500]}\n"  # 限制每条新闻长度
+            )
+
+        user_prompt = f"""Event Question: {question}
+
+Related News/Announcements (in chronological order):
+{'-' * 60}
+{chr(10).join(news_text)}
+{'-' * 60}
+
+Please provide your analysis in this exact JSON format:
+{{
+    "prediction": "Yes" or "No" or "Uncertain",
+    "confidence": 0.0-1.0,
+    "reasoning": "your 2-3 sentence explanation"
+}}
+"""
+
+        return [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+    def _call_llm(self, messages: List[dict]) -> str:
+        """调用 OpenRouter API."""
+        response = self.client.post(
+            f"{self.base_url}/chat/completions",
+            json={
+                "model": self.model,
+                "messages": messages,
+                "temperature": 0.1,  # 低温度，更确定
+                "max_tokens": 500,
+            },
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data["choices"][0]["message"]["content"]
+
+    def _parse_response(
+        self,
+        response: str,
+        question: str,
+    ) -> dict:
+        """解析 LLM 响应，提取 prediction/confidence/reasoning."""
+        import re
+
+        # 尝试提取 JSON
+        json_match = re.search(r"\{[^}]+\}", response, re.DOTALL)
+        if json_match:
+            try:
+                parsed = json.loads(json_match.group())
+                return {
+                    "prediction": parsed.get("prediction", "Uncertain"),
+                    "confidence": float(parsed.get("confidence", 0.5)),
+                    "reasoning": parsed.get("reasoning", response),
+                }
+            except json.JSONDecodeError:
+                pass
+
+        # Fallback: 启发式解析
+        prediction = "Uncertain"
+        confidence = 0.5
+        reasoning = response
+
+        if "yes" in response.lower() and "no" not in response.lower():
+            prediction = "Yes"
+        elif "no" in response.lower() and "yes" not in response.lower():
+            prediction = "No"
+
+        # 提取置信度
+        conf_match = re.search(r"confidence[:\s]+([0-9.]+)", response.lower())
+        if conf_match:
+            confidence = float(conf_match.group(1))
+
+        return {
+            "prediction": prediction,
+            "confidence": min(1.0, max(0.0, confidence)),
+            "reasoning": reasoning,
+        }
+
+    def _save_results(
+        self,
+        results: List[LLMJudgment],
+        output_path: Path,
+    ) -> None:
+        """保存结果到 JSON 文件."""
+        data = [asdict(r) for r in results]
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        print(f"Saved {len(results)} judgments to {output_path}")
+
+
+def main():
+    """示例：测试 LLM Judge."""
+    if not OPENROUTER_API_KEY:
+        print("ERROR: OPENROUTER_API_KEY not set")
+        return
+
+    judge = LLMJudge()
+
+    # 测试用例：SEC Bitcoin ETF 审批
+    test_event = {
+        "event_id": "test-sec-btc-etf-001",
+        "question": "Will SEC approve a spot Bitcoin ETF by January 2024?",
+        "category": "crypto",
+        "news_items": [
+            {
+                "timestamp": "2023-10-15T09:00:00Z",
+                "source": "SEC.gov",
+                "text": "SEC acknowledges filing for spot Bitcoin ETF application from BlackRock.",
+                "url": "https://sec.gov/...",
+            },
+            {
+                "timestamp": "2023-11-20T14:30:00Z",
+                "source": "CoinDesk",
+                "text": "SEC Chair Gensler signals potential approval pathway for Bitcoin ETFs with surveillance sharing agreements.",
+                "url": "https://coindesk.com/...",
+            },
+            {
+                "timestamp": "2024-01-08T16:00:00Z",
+                "source": "SEC.gov",
+                "text": "SEC approves 11 spot Bitcoin ETFs from major issuers including BlackRock, Fidelity, Ark 21Shares.",
+                "url": "https://sec.gov/...",
+            },
+        ],
+    }
+
+    print("Testing LLM Judge with sample event...")
+    result = judge.judge_with_news(
+        event_id=test_event["event_id"],
+        question=test_event["question"],
+        news_items=test_event["news_items"],
+        category=test_event["category"],
+    )
+
+    print(f"\nPrediction: {result.llm_prediction}")
+    print(f"Confidence: {result.confidence:.1%}")
+    print(f"Reasoning: {result.reasoning}")
+    print(f"Processing time: {result.processing_time_sec}s")
+
+
+if __name__ == "__main__":
+    main()

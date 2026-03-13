@@ -44,7 +44,7 @@ def export_markets(
             id AS market_id,
             question,
             volume,
-            category,
+            NULL AS category,  -- category column not available in schema; derive later via resolve_category
             TRIM(json_extract_string(clob_token_ids, '$[0]')) AS yes_token,
             CAST(json_extract_string(outcome_prices, '$[0]') AS DOUBLE) AS yes_final,
             end_date,
@@ -140,7 +140,7 @@ def export_markets(
             record = {
                 "market_id": str(row["market_id"]),
                 "question": row["question"],
-                "category": resolve_category(row.get("category"), row["question"]),
+                "category": resolve_category(None if pd.isna(row.get("category")) else str(row.get("category")), row["question"]),
                 "yes_price": float(row["yes_price"]),
                 "outcome": int(row["outcome"]),
                 "volume": round(float(row["volume"]), 2),
