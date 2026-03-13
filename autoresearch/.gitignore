@@ -1,0 +1,13 @@
+# Generated data files (not source code)
+markets.jsonl
+predictions.jsonl
+experiment_runs.jsonl
+research_outcomes.json
+market_descriptions.parquet
+market_calibration.parquet
+
+# Parquet files
+*.parquet
+
+# Test output
+test-*.md
