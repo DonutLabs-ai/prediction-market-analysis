@@ -1,6 +1,6 @@
 # Prediction Market Analysis
 
-A framework for analyzing prediction market data, including the largest publicly available dataset of Polymarket and Kalshi market and trade data. Provides tools for data collection, storage, and running analysis scripts that generate figures and statistics.
+A framework for analyzing prediction market data, including the largest publicly available dataset of Polymarket and Kalshi market and trade data. Provides tools for data collection, storage, running analysis scripts, and iterative model development.
 
 ## Overview
 
@@ -8,12 +8,15 @@ This project enables research and analysis of prediction markets by providing:
 - Pre-collected datasets from Polymarket and Kalshi
 - Data collection indexers for gathering new data
 - Analysis framework for generating figures and statistics
+- **Selfsearch**: Iterative LLM-powered calibration model development
 
 Currently supported features:
 - Market metadata collection (Kalshi & Polymarket)
 - Trade history collection via API and blockchain
 - Parquet-based storage with automatic progress saving
 - Extensible analysis script framework
+- Horizon-aware, domain-specific probability recalibration (Le 2026)
+- Next.js dashboard for visualizing research outcomes
 
 ## Installation & Usage
 
@@ -49,6 +52,21 @@ make analyze
 
 This opens an interactive menu to select which analysis to run. You can run all analyses or select a specific one. Output files (PNG, PDF, CSV, JSON) are saved to `output/`.
 
+### Selfsearch Model Development
+
+```bash
+# Prepare data splits
+python -m selfsearch.prepare
+
+# Run your model
+python -m selfsearch.model val
+
+# Evaluate iteration
+python -m selfsearch.run_loop
+```
+
+See [docs/SELFSEARCH.md](docs/SELFSEARCH.md) for the full guide.
+
 ### Packaging Data
 
 To compress the data directory for storage/distribution:
@@ -65,11 +83,15 @@ This creates a zstd-compressed tar archive (`data.tar.zst`) and removes the `dat
 ├── src/
 │   ├── analysis/           # Analysis scripts
 │   │   ├── kalshi/         # Kalshi-specific analyses
-│   │   └── polymarket/     # Polymarket-specific analyses
+│   │   ├── polymarket/     # Polymarket analyses
+│   │   └── comparison/     # Cross-market comparisons
 │   ├── indexers/           # Data collection indexers
 │   │   ├── kalshi/         # Kalshi API client and indexers
 │   │   └── polymarket/     # Polymarket API/blockchain indexers
 │   └── common/             # Shared utilities and interfaces
+├── selfsearch/             # LLM-powered calibration model development
+├── autoresearch/           # Horizon-aware recalibration (Le 2026)
+├── dashboard/              # Next.js research outcomes dashboard
 ├── data/                   # Data directory (extracted from data.tar.zst)
 │   ├── kalshi/
 │   │   ├── markets/
@@ -86,6 +108,10 @@ This creates a zstd-compressed tar archive (`data.tar.zst`) and removes the `dat
 
 - [Data Schemas](docs/SCHEMAS.md) - Parquet file schemas for markets and trades
 - [Writing Analyses](docs/ANALYSIS.md) - Guide for writing custom analysis scripts
+- [Calibration Methodology](docs/CALIBRATION_METHODOLOGY.md) - Two-step domain-specific recalibration (Le 2026)
+- [Implementation Guide](docs/IMPLEMENTATION_GUIDE.md) - How to use the recalibration formula
+- [Selfsearch](docs/SELFSEARCH.md) - LLM-powered calibration model development
+- [Dashboard](dashboard/README.md) - Next.js dashboard for research outcomes
 
 ## Contributing
 

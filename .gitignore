@@ -29,3 +29,17 @@ fig
 *.tar.zst
 output
 .tmp
+
+# Agent/tooling state
+.ralph/
+.ralphrc
+selfsearch/
+
+# Test outputs
+dashboard/test-results/
+test-*markets*.md
+
+# Data files (keep dashboard public data)
+*.jsonl
+*.parquet
+!dashboard/public/data/

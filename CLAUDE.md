@@ -12,6 +12,11 @@ make test                       # Run all tests (uv run pytest tests/ -v)
 make lint                       # Check code style with ruff
 make format                     # Auto-format code with ruff
 make setup                      # Download and extract 36GiB dataset from Cloudflare R2
+
+# Selfsearch model development
+python -m selfsearch.prepare    # Prepare data splits
+python -m selfsearch.model val  # Run model on validation set
+python -m selfsearch.run_loop   # Evaluate iteration (keep/discard)
 ```
 
 Run a single test file: `uv run pytest tests/test_analysis_run.py -v`
@@ -67,6 +72,20 @@ src/
     storage.py    # ParquetStorage
     interfaces/   # ChartConfig, ChartType, UnitType
     util/         # strings, package helpers
+autoresearch/
+  h2_calibration.py      # Horizon-aware calibration with Le (2026) parameters
+  recalibration.py       # Two-step logit-based recalibration formula
+  calibration_parameters.py  # Table 3 (slopes), Table 6 (intercepts)
+  strategy.py / strategy_v2.py  # Trading signal generation
+selfsearch/
+  prepare.py      # Data prep, outcome hiding, evaluation, anti-cheat
+  model.py        # LLM-powered calibration model (modify this)
+  run_loop.py     # Iteration orchestrator (keep/discard logic)
+  gen_dashboard.py  # HTML dashboard generator
+dashboard/
+  app/            # Next.js app router pages
+  components/     # React components (ResearchOutcomes)
+  public/data/    # Built JSON datasets
 ```
 
 ### Events system
@@ -81,6 +100,9 @@ Events are stored as `data/polymarket/events/events_{scan_id}.parquet`. The comp
 - `test_compile.py` — parametrized import and instantiation tests for every module.
 - `test_analysis_run.py` / `test_analysis_save.py` — test `run()` and `save()` with fixture data.
 - `test_events_e2e.py` — end-to-end tests for the events indexer and events+markets analysis.
+- `test_polymarket_h2_h3_analyses.py` — tests for H2/H3 calibration analyses.
+- `test_polymarket_h5_h6_analyses.py` — tests for H5/H6 mispricing analyses.
+- `test_dashboard_data_pipeline.py` — tests for dashboard data pipeline.
 - `test_mine_patterns.py` — currently in TDD RED state (failing by design).
 
 ## PR conventions

@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Research Outcomes Dashboard
+
+A Next.js application for visualizing prediction market research outcomes and model performance.
+
+## Overview
+
+This dashboard displays:
+- Research outcomes from the selfsearch calibration model
+- Model performance metrics (composite score, Brier score, ROI, bet rate)
+- Iteration history with diffs and metrics
+- Interactive charts for tracking improvements
+
+## Data Contract
+
+The dashboard reads data from `public/data/research.json`, which contains:
+
+```json
+{
+  "iterations": [
+    {
+      "iteration": 1,
+      "composite": 0.456789,
+      "brier": 0.189234,
+      "roi": 0.0234,
+      "pnl": 123.45,
+      "num_bets": 456,
+      "status": "keep",
+      "description": "initial baseline"
+    }
+  ],
+  "best_iteration": {
+    "iteration": 5,
+    "composite": 0.512345,
+    ...
+  },
+  "total_iterations": 10,
+  "kept_iterations": 3,
+  "discarded_iterations": 7
+}
+```
 
 ## Getting Started
 
-First, run the development server:
+### Install dependencies
+
+```bash
+npm install
+```
+
+### Build dashboard data
+
+From the project root:
+
+```bash
+python -m scripts.build_dashboard_datasets
+```
+
+This generates `public/data/research.json` from `results.tsv`.
+
+### Run development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The easiest way to deploy is using the [Vercel Platform](https://vercel.com/new).
 
-## Learn More
+### Prerequisites
 
-To learn more about Next.js, take a look at the following resources:
+- Ensure `public/data/research.json` contains pre-built data (committed to git)
+- Set up automatic data refresh via CI/CD if needed
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+vercel deploy --prod
+```
 
-## Deploy on Vercel
+## Components
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `app/page.tsx` — Main dashboard page with metrics overview
+- `components/ResearchOutcomes.tsx` — Iteration history table and charts
+- `public/data/research.json` — Dataset (generated from `results.tsv`)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+- `scripts/prepare-data.ts` — TypeScript data preparation utilities
