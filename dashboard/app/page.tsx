@@ -1,4 +1,4 @@
-import { getResults, getLearning, getCalibration, getResearch } from "@/lib/data";
+import { getResults, getLearning, getCalibration, getResearch, getSelfsearch, getValidation } from "@/lib/data";
 import HeroMetrics from "@/components/HeroMetrics";
 import LearningTimeline from "@/components/LearningTimeline";
 import ExperimentLog from "@/components/ExperimentLog";
@@ -9,6 +9,9 @@ import BucketPerformance from "@/components/BucketPerformance";
 import StrategyCode from "@/components/StrategyCode";
 import Methodology from "@/components/Methodology";
 import ResearchOutcomes from "@/components/ResearchOutcomes";
+import SelfsearchOutcomes from "@/components/SelfsearchOutcomes";
+import ValidationRisks from "@/components/ValidationRisks";
+import type { ValidationData } from "@/components/ValidationRisks";
 
 function Section({
   title,
@@ -35,6 +38,8 @@ export default function Home() {
   const learning = getLearning();
   const calibration = getCalibration();
   const research = getResearch();
+  const selfsearch = getSelfsearch();
+  const validation = getValidation() as ValidationData;
 
   return (
     <main className="mx-auto max-w-7xl space-y-16 px-6 py-12">
@@ -64,6 +69,14 @@ export default function Home() {
 
       <Section title="Expiry Analysis" desc="How time-to-expiry affects market calibration and mispricing edge">
         <ResearchOutcomes research={research} />
+      </Section>
+
+      <Section title="LLM vs Market Study" desc="Information advantage: LLM speed vs market efficiency on event-driven predictions">
+        <SelfsearchOutcomes data={selfsearch} />
+      </Section>
+
+      <Section title="Validation & Risks" desc="Parameter transfer gaps, temporal drift detection, and confidence intervals for calibration reliability">
+        <ValidationRisks data={validation} />
       </Section>
 
       <Section title="Bucket Performance" desc="Per-bucket calibration data with category drill-down">

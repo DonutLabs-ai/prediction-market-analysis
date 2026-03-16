@@ -32,8 +32,17 @@ output
 
 # Agent/tooling state
 .ralph/
-.ralphrc
+.ralprc
 selfsearch/.env
+
+# Submodules / external repos (have their own .git)
+polymarket-autosearch/
+strategyloop/
+selfsearch-free
+
+# Generated reports
+autoresearch/drift_report.json
+selfsearch/dashboard.html
 
 # Test outputs
 dashboard/test-results/

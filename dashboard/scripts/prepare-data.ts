@@ -129,3 +129,28 @@ if (existsSync(researchPath)) {
 } else {
   console.log("research.json: skipped (autoresearch/research_outcomes.json not found)");
 }
+
+// 5. Build validation.json from polymarket_parameters, drift_report, bootstrap_ci
+const transferPath = join(ROOT, "autoresearch/polymarket_parameters.json");
+const driftPath = join(ROOT, "autoresearch/drift_report.json");
+const ciPath = join(ROOT, "autoresearch/bootstrap_ci.json");
+
+const validation: Record<string, unknown> = {};
+if (existsSync(transferPath)) {
+  validation.transfer = JSON.parse(readFileSync(transferPath, "utf-8"));
+}
+if (existsSync(driftPath)) {
+  validation.drift = JSON.parse(readFileSync(driftPath, "utf-8"));
+}
+if (existsSync(ciPath)) {
+  validation.confidence = JSON.parse(readFileSync(ciPath, "utf-8"));
+}
+
+if (Object.keys(validation).length > 0) {
+  writeFileSync(join(OUT, "validation.json"), JSON.stringify(validation, null, 2));
+  console.log(`validation.json: created (${Object.keys(validation).join(", ")})`);
+} else {
+  // Write empty object so import doesn't fail
+  writeFileSync(join(OUT, "validation.json"), "{}");
+  console.log("validation.json: empty (no validation source files found)");
+}

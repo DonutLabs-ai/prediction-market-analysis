@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, List, Optional
@@ -29,10 +29,12 @@ class BacktestResult:
     market_final_price: float  # 事件后的市场赔率
     market_reaction_time_min: Optional[float]  # 市场反应时间（分钟）
     market_correct: bool  # 市场最终是否指向正确结果
+    price_change: Optional[float]  # 市场价格变动幅度
 
     # 时间优势
-    llm_reaction_time_min: Optional[float]  # LLM 反应时间
-    information_advantage_min: Optional[float]  # 信息优势 = market - llm
+    earliest_news_time: Optional[str]  # 最早新闻时间
+    information_advantage_min: Optional[float]  # 新闻到市场反应的时间差
+    api_latency_sec: float = 0.0  # LLM API 延迟（调试用）
 
     # 噪音标记
     is_noise_event: bool = False
@@ -48,7 +50,7 @@ class Backtester:
 
     def load_events(self, events_path: Path) -> List[dict]:
         """加载事件数据."""
-        with open(events_path, "r", encoding="utf-8") as f:
+        with open(events_path, encoding="utf-8") as f:
             return json.load(f)
 
     def load_llm_judgments(
@@ -56,7 +58,7 @@ class Backtester:
         judgments_path: Path,
     ) -> dict[str, dict]:
         """加载 LLM 判断结果."""
-        with open(judgments_path, "r", encoding="utf-8") as f:
+        with open(judgments_path, encoding="utf-8") as f:
             data = json.load(f)
         return {item["event_id"]: item for item in data}
 
@@ -65,51 +67,58 @@ class Backtester:
         prices_path: Path,
     ) -> dict[str, List[dict]]:
         """加载市场赔率时间序列."""
-        with open(prices_path, "r", encoding="utf-8") as f:
+        with open(prices_path, encoding="utf-8") as f:
             data = json.load(f)
         return {k: v for k, v in data.items()}
 
     def compute_market_reaction_time(
         self,
         price_series: List[dict],
-        threshold: float = 0.80,
         event_time: Optional[str] = None,
-    ) -> Optional[float]:
-        """计算市场反应时间.
+        relative_threshold: float = 0.20,
+        stability_points: int = 3,
+    ) -> tuple[Optional[float], Optional[float]]:
+        """计算市场反应时间（相对价格变动检测）.
 
         Args:
             price_series: 价格时间序列 [{timestamp, price}, ...]
-            threshold: 定义"充分反应"的阈值 (如 >80% 或 <20%)
-            event_time: 事件发生时间
+            event_time: 事件发生时间（用于计算相对时间）
+            relative_threshold: 相对于初始价格的变动阈值（百分点）
+            stability_points: 用于稳定性检查的后续数据点数量
 
         Returns:
-            反应时间（分钟），无法计算返回 None
+            (reaction_time_minutes, price_change) 元组，无法计算返回 (None, None)
         """
         if not price_series:
-            return None
+            return None, None
 
-        # 按时间排序
         sorted_prices = sorted(price_series, key=lambda x: x.get("timestamp", ""))
+        initial_price = sorted_prices[0].get("price", 0.5)
 
-        # 找到首次突破阈值的时间点
         for i, point in enumerate(sorted_prices):
             price = point.get("price", 0.5)
-            if price >= threshold or price <= (1 - threshold):
-                # 检查是否稳定（后续 3 个点也在阈值附近）
-                if i + 3 < len(sorted_prices):
-                    next_prices = [sorted_prices[j].get("price", 0.5) for j in range(i, i + 3)]
-                    if all(p >= threshold - 0.05 for p in next_prices):
-                        if event_time:
-                            event_dt = datetime.fromisoformat(event_time.replace("Z", "+00:00"))
-                            reaction_dt = datetime.fromisoformat(
-                                point["timestamp"].replace("Z", "+00:00")
-                            )
-                            delta_min = (reaction_dt - event_dt).total_seconds() / 60
-                            return round(delta_min, 1)
-                        else:
-                            return None  # 无法计算绝对时间
+            change = abs(price - initial_price)
 
-        return None
+            if change >= relative_threshold:
+                # Stability check: next points don't revert below 70% of threshold
+                stable = True
+                check_end = min(i + stability_points, len(sorted_prices))
+                if check_end > i + 1:
+                    for j in range(i + 1, check_end):
+                        subsequent_change = abs(sorted_prices[j].get("price", 0.5) - initial_price)
+                        if subsequent_change < relative_threshold * 0.70:
+                            stable = False
+                            break
+
+                if stable and event_time:
+                    event_dt = datetime.fromisoformat(event_time.replace("Z", "+00:00"))
+                    reaction_dt = datetime.fromisoformat(
+                        point["timestamp"].replace("Z", "+00:00")
+                    )
+                    delta_min = (reaction_dt - event_dt).total_seconds() / 60
+                    return round(delta_min, 1), round(price - initial_price, 4)
+
+        return None, None
 
     def run_backtest(
         self,
@@ -136,18 +145,26 @@ class Backtester:
             prices = market_data.get(event_id, [])
             market_initial = prices[0].get("price", 0.5) if prices else 0.5
             market_final = prices[-1].get("price", 0.5) if prices else 0.5
-            market_reaction = self.compute_market_reaction_time(prices)
             market_pred = "Yes" if market_final >= 0.5 else "No"
             market_correct = (market_pred == actual) if actual else False
 
-            # LLM 反应时间（从最早新闻到判断完成）
-            llm_reaction = llm.get("processing_time_sec", 0) / 60  # 转换为分钟
+            # Extract earliest news time for information advantage calculation
+            news_items = event.get("news_items", [])
+            news_timestamps = [
+                n["timestamp"] for n in news_items
+                if n.get("timestamp")
+            ]
+            earliest_news = min(news_timestamps) if news_timestamps else None
 
-            # 信息优势
-            if market_reaction and llm_reaction:
-                info_advantage = market_reaction - llm_reaction
-            else:
-                info_advantage = None
+            # Compute market reaction time relative to earliest news
+            market_reaction, price_change = self.compute_market_reaction_time(
+                prices, event_time=earliest_news,
+            )
+
+            # Information advantage = time from earliest news to market reaction
+            info_advantage = market_reaction  # already relative to news time
+
+            api_latency = llm.get("processing_time_sec", 0.0)
 
             result = BacktestResult(
                 event_id=event_id,
@@ -161,8 +178,10 @@ class Backtester:
                 market_final_price=market_final,
                 market_reaction_time_min=market_reaction,
                 market_correct=market_correct,
-                llm_reaction_time_min=round(llm_reaction, 2),
-                information_advantage_min=round(info_advantage, 2) if info_advantage else None,
+                price_change=price_change,
+                earliest_news_time=earliest_news,
+                information_advantage_min=round(info_advantage, 2) if info_advantage is not None else None,
+                api_latency_sec=round(api_latency, 2),
             )
             results.append(result)
 

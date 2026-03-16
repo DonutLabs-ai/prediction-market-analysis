@@ -8,7 +8,10 @@ This project enables research and analysis of prediction markets by providing:
 - Pre-collected datasets from Polymarket and Kalshi
 - Data collection indexers for gathering new data
 - Analysis framework for generating figures and statistics
-- **Selfsearch**: Iterative LLM-powered calibration model development
+- **Selfsearch**: LLM vs Market description evaluation (free, no data leakage)
+- **Strategyloop**: Karpathy-style autoresearch for calibration models
+- **Autoresearch**: Horizon-aware recalibration (Le 2026)
+- **Dashboard**: Next.js app for visualizing research outcomes
 
 Currently supported features:
 - Market metadata collection (Kalshi & Polymarket)
@@ -52,20 +55,35 @@ make analyze
 
 This opens an interactive menu to select which analysis to run. You can run all analyses or select a specific one. Output files (PNG, PDF, CSV, JSON) are saved to `output/`.
 
-### Selfsearch Model Development
+### Selfsearch: LLM vs Market Evaluation
+
+```bash
+# Run full study (sources from Parquet, free model)
+python -m selfsearch run --source-count 50 --skip-viz
+
+# Source events only
+python -m selfsearch source_events --count 20
+
+# Evaluate standalone
+python -m selfsearch.evaluate
+```
+
+See [selfsearch/README.md](selfsearch/README.md) for the full guide.
+
+### Strategyloop: Autoresearch
 
 ```bash
 # Prepare data splits
-python -m selfsearch.prepare
+python -m strategyloop.prepare
 
 # Run your model
-python -m selfsearch.model val
+python -m strategyloop.model val
 
 # Evaluate iteration
-python -m selfsearch.run_loop
+python -m strategyloop.run_loop
 ```
 
-See [docs/SELFSEARCH.md](docs/SELFSEARCH.md) for the full guide.
+See [strategyloop/program.md](strategyloop/program.md) for the full guide.
 
 ### Packaging Data
 
@@ -89,7 +107,8 @@ This creates a zstd-compressed tar archive (`data.tar.zst`) and removes the `dat
 │   │   ├── kalshi/         # Kalshi API client and indexers
 │   │   └── polymarket/     # Polymarket API/blockchain indexers
 │   └── common/             # Shared utilities and interfaces
-├── selfsearch/             # LLM-powered calibration model development
+├── selfsearch/             # LLM vs Market description evaluation
+├── strategyloop/           # Karpathy-style autoresearch
 ├── autoresearch/           # Horizon-aware recalibration (Le 2026)
 ├── dashboard/              # Next.js research outcomes dashboard
 ├── data/                   # Data directory (extracted from data.tar.zst)
@@ -110,7 +129,8 @@ This creates a zstd-compressed tar archive (`data.tar.zst`) and removes the `dat
 - [Writing Analyses](docs/ANALYSIS.md) - Guide for writing custom analysis scripts
 - [Calibration Methodology](docs/CALIBRATION_METHODOLOGY.md) - Two-step domain-specific recalibration (Le 2026)
 - [Implementation Guide](docs/IMPLEMENTATION_GUIDE.md) - How to use the recalibration formula
-- [Selfsearch](docs/SELFSEARCH.md) - LLM-powered calibration model development
+- [Selfsearch](selfsearch/README.md) - LLM vs Market description evaluation
+- [Strategyloop](strategyloop/program.md) - Autoresearch workflow guide
 - [Dashboard](dashboard/README.md) - Next.js dashboard for research outcomes
 
 ## Contributing

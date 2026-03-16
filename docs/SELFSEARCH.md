@@ -15,13 +15,13 @@ Selfsearch enables rapid iteration on prediction models by:
 
 ```bash
 # 1. Prepare data splits (one-time setup)
-python -m selfsearch.prepare
+python -m strategyloop.prepare
 
 # 2. Run your model on validation set
-python -m selfsearch.model val
+python -m strategyloop.model val
 
 # 3. Evaluate and keep/discard iteration
-python -m selfsearch.run_loop
+python -m strategyloop.run_loop
 ```
 
 ## Architecture
@@ -29,7 +29,7 @@ python -m selfsearch.run_loop
 ### Directory Structure
 
 ```
-selfsearch/
+strategyloop/
 ├── prepare.py           # Data prep, outcome hiding, evaluation, anti-cheat
 ├── model.py             # YOUR MODEL — modify this freely
 ├── model_best.py        # Best-performing model (auto-saved)
@@ -282,7 +282,7 @@ The anti-cheat scanner uses AST parsing to detect these patterns.
 1. **Read current state**: Review `model.py`, `results.tsv`, and `dashboard.html`
 2. **Hypothesize improvement**: Identify a strategy to test
 3. **Edit `model.py`**: Implement your change
-4. **Run iteration**: `python -m selfsearch.run_loop "description of change"`
+4. **Run iteration**: `python -m strategyloop.run_loop "description of change"`
 5. **Check result**: Keep (composite improved) or discard (no improvement)
 6. **If discarded 5x**: Consider a paradigm shift
 
@@ -290,22 +290,22 @@ The anti-cheat scanner uses AST parsing to detect these patterns.
 
 ```bash
 # Prepare data (one-time)
-python -m selfsearch.prepare
+python -m strategyloop.prepare
 
 # Run model on validation set
-python -m selfsearch.model val
+python -m strategyloop.model val
 
 # Run single iteration (scan → run → evaluate → keep/discard)
-python -m selfsearch.run_loop "add VWAP mean reversion"
+python -m strategyloop.run_loop "add VWAP mean reversion"
 
 # Evaluate predictions manually
-python -m selfsearch.prepare evaluate
+python -m strategyloop.prepare evaluate
 
 # Scan model.py for violations
-python -m selfsearch.prepare scan
+python -m strategyloop.prepare scan
 
 # Final evaluation on test set
-python -m selfsearch.run_final
+python -m strategyloop.run_final
 ```
 
 ### Viewing Results
@@ -370,7 +370,7 @@ out.to_csv(BASE / f"predictions_{split}.csv", index=False)
 
 ## References
 
-- **Program Guide**: See `selfsearch/program.md` for detailed instructions
+- **Program Guide**: See `strategyloop/program.md` for detailed instructions
 - **Calibration Methodology**: See `docs/CALIBRATION_METHODOLOGY.md` for the underlying theory
 - **Implementation Guide**: See `docs/IMPLEMENTATION_GUIDE.md` for the logit-based recalibration formula
 

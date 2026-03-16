@@ -47,6 +47,28 @@ try:
 except ImportError:
     HAS_LOGIT_RECAL = False
 
+# ---------------------------------------------------------------------------
+# Polymarket-native blended parameters (with graceful fallback to Kalshi-only)
+# ---------------------------------------------------------------------------
+
+_blend_params: dict | None = None
+
+
+def _load_blend_params() -> dict | None:
+    global _blend_params
+    if _blend_params is not None:
+        return _blend_params
+    blend_path = Path(__file__).parent / "polymarket_parameters.json"
+    if blend_path.exists():
+        data = json.loads(blend_path.read_text())
+        # Build lookup: (category, horizon_index) -> {blend_alpha, blend_beta}
+        _blend_params = {}
+        for cell in data.get("cells", []):
+            key = (cell["category"], cell["horizon_index"])
+            _blend_params[key] = {"alpha": cell["blend_alpha"], "beta": cell["blend_beta"]}
+        return _blend_params
+    return None
+
 
 # ---------------------------------------------------------------------------
 # Calibration table loader
@@ -132,12 +154,28 @@ def predict_market(market: dict[str, Any]) -> dict[str, Any]:
             end_date = datetime.fromisoformat(end_date_str.replace("+08:00", ""))
             hours_to_exp = max(0, (end_date - datetime.now()).total_seconds() / 3600)
 
-            # Apply recalibration
+            # Apply recalibration (use Polymarket blend if available)
             recal = recalibrate_probability(
                 yes_price, category, hours_to_exp, use_intercept=USE_INTERCEPT
             )
 
             predicted_prob = recal["recalibrated_prob"]
+            used_alpha = recal["alpha"]
+            used_beta = recal["beta"]
+
+            # Override with blended Polymarket-native parameters if available
+            blend = _load_blend_params()
+            if blend is not None:
+                from autoresearch.calibration_parameters import get_horizon_index
+                from autoresearch.recalibration import logit, sigmoid
+
+                h_idx = get_horizon_index(hours_to_exp)
+                key = (category, h_idx)
+                if key in blend:
+                    used_alpha = blend[key]["alpha"]
+                    used_beta = blend[key]["beta"]
+                    logit_p = logit(yes_price)
+                    predicted_prob = float(sigmoid(used_alpha + used_beta * logit_p))
 
             # Generate signal
             ev_no = yes_price - predicted_prob
@@ -145,9 +183,9 @@ def predict_market(market: dict[str, Any]) -> dict[str, Any]:
 
             result["predicted_prob"] = predicted_prob
             result["horizon"] = recal["horizon"]
-            result["alpha"] = recal["alpha"]
-            result["beta"] = recal["beta"]
-            result["edge_raw"] = float(recal["edge"])
+            result["alpha"] = used_alpha
+            result["beta"] = used_beta
+            result["edge_raw"] = float(predicted_prob - yes_price)
 
             if ev_no >= MIN_EDGE and ev_no > ev_yes:
                 result["bet_size"] = BET_SIZE_FRAC

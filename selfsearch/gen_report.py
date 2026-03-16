@@ -593,17 +593,137 @@ python -m selfsearch.gen_report
         print(f"Saved HTML dashboard to {output_path}")
         return output_path
 
+    def generate_nextjs_json(
+        self,
+        results: list[dict],
+        metrics: dict,
+        noise_assessments: dict,
+        output_path: Optional[Path] = None,
+    ) -> Path:
+        """Generate Next.js dashboard JSON data.
+
+        Args:
+            results: 回测结果列表
+            metrics: 回测指标
+            noise_assessments: 噪音事件评估
+            output_path: 输出路径
+
+        Returns:
+            输出文件路径
+        """
+        total_events = len(results)
+        noise_count = sum(1 for a in noise_assessments.values() if a.get("is_noise", False))
+        clean_events = total_events - noise_count
+
+        clean_results = [
+            r for r in results
+            if not noise_assessments.get(r["event_id"], {}).get("is_noise", False)
+        ]
+        clean_llm_correct = sum(1 for r in clean_results if r.get("llm_correct", False))
+        clean_market_correct = sum(1 for r in clean_results if r.get("market_correct", False))
+        clean_llm_accuracy = clean_llm_correct / len(clean_results) if clean_results else 0
+        clean_market_accuracy = clean_market_correct / len(clean_results) if clean_results else 0
+
+        advantages = [
+            r["information_advantage_min"]
+            for r in clean_results
+            if r.get("information_advantage_min") is not None
+        ]
+        avg_advantage = sum(advantages) / len(advantages) if advantages else None
+        positive_advantage_count = sum(1 for v in advantages if v > 0) if advantages else 0
+
+        # Build summary
+        summary = {
+            "total_events": total_events,
+            "noise_events": noise_count,
+            "clean_events": clean_events,
+            "llm_accuracy": round(clean_llm_accuracy, 4),
+            "market_accuracy": round(clean_market_accuracy, 4),
+            "llm_outperformance": round(clean_llm_accuracy - clean_market_accuracy, 4),
+            "avg_information_advantage_min": round(avg_advantage, 2) if avg_advantage else None,
+            "positive_advantage_count": positive_advantage_count,
+            "positive_advantage_rate": round(positive_advantage_count / len(clean_results), 4) if clean_results else 0.0,
+        }
+
+        # Build category breakdown
+        category_stats: dict[str, dict] = {}
+        for r in clean_results:
+            cat = r.get("category", "other")
+            if cat not in category_stats:
+                category_stats[cat] = {"llm_correct": 0, "market_correct": 0, "count": 0, "advantages": []}
+            category_stats[cat]["count"] += 1
+            if r.get("llm_correct"):
+                category_stats[cat]["llm_correct"] += 1
+            if r.get("market_correct"):
+                category_stats[cat]["market_correct"] += 1
+            if r.get("information_advantage_min") is not None:
+                category_stats[cat]["advantages"].append(r["information_advantage_min"])
+
+        category_breakdown = {}
+        for cat, stats in category_stats.items():
+            cat_count = stats["count"]
+            cat_avg_adv = sum(stats["advantages"]) / len(stats["advantages"]) if stats["advantages"] else None
+            category_breakdown[cat] = {
+                "llm_accuracy": round(stats["llm_correct"] / cat_count, 4) if cat_count else 0.0,
+                "market_accuracy": round(stats["market_correct"] / cat_count, 4) if cat_count else 0.0,
+                "count": cat_count,
+                "avg_advantage": round(cat_avg_adv, 2) if cat_avg_adv else None,
+            }
+
+        # Build events list
+        events = []
+        for r in results:
+            is_noise = noise_assessments.get(r["event_id"], {}).get("is_noise", False)
+            events.append({
+                "event_id": r.get("event_id", "unknown"),
+                "category": r.get("category", "other"),
+                "llm_prediction": r.get("llm_prediction", "N/A"),
+                "confidence": int(r.get("llm_confidence", 0) * 100),
+                "llm_correct": r.get("llm_correct", False),
+                "market_correct": r.get("market_correct", False),
+                "advantage_min": round(r["information_advantage_min"], 2) if r.get("information_advantage_min") else None,
+                "is_noise": is_noise,
+            })
+
+        # Build noise breakdown
+        noise_types = {"low_confidence": 0, "low_correlation": 0, "low_volatility": 0, "pure_random": 0}
+        for a in noise_assessments.values():
+            if a.get("is_noise"):
+                noise_type = a.get("noise_type", "low_correlation")
+                if noise_type in noise_types:
+                    noise_types[noise_type] += 1
+
+        noise_breakdown = noise_types
+
+        # Assemble final data structure matching dashboard/lib/data.ts interface
+        data = {
+            "summary": summary,
+            "category_breakdown": category_breakdown,
+            "events": events,
+            "noise_breakdown": noise_breakdown,
+            "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+
+        # Save
+        output_path = output_path or Path("dashboard/public/data/selfsearch.json")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+
+        print(f"Saved Next.js JSON data to {output_path}")
+        return output_path
+
     def generate_all(
         self,
         results_path: Optional[Path] = None,
         metrics_path: Optional[Path] = None,
         noise_path: Optional[Path] = None,
         output_dir: Optional[Path] = None,
-    ) -> tuple[Path, Path]:
+    ) -> tuple[Path, Path, Path]:
         """生成所有报告.
 
         Returns:
-            (markdown_report_path, html_dashboard_path)
+            (markdown_report_path, html_dashboard_path, nextjs_json_path)
         """
         output_dir = output_dir or self.data_dir
 
@@ -615,8 +735,9 @@ python -m selfsearch.gen_report
         # 生成报告
         md_path = self.generate_markdown_report(results, metrics, noise_assessments)
         html_path = self.generate_html_dashboard(results, metrics, noise_assessments)
+        json_path = self.generate_nextjs_json(results, metrics, noise_assessments)
 
-        return md_path, html_path
+        return md_path, html_path, json_path
 
 
 def main():
@@ -670,10 +791,11 @@ def main():
         json.dump(sample_noise, f, indent=2)
 
     # 生成报告
-    md_path, html_path = generator.generate_all()
+    md_path, html_path, json_path = generator.generate_all()
     print(f"\nGenerated reports:")
     print(f"  - Markdown: {md_path}")
     print(f"  - HTML Dashboard: {html_path}")
+    print(f"  - Next.js JSON: {json_path}")
 
 
 if __name__ == "__main__":

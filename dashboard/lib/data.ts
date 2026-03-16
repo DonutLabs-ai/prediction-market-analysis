@@ -2,6 +2,8 @@ import resultsData from "@/public/data/results.json";
 import learningData from "@/public/data/learning.json";
 import calibrationData from "@/public/data/calibration.json";
 import researchData from "@/public/data/research.json";
+import selfsearchData from "@/public/data/selfsearch.json";
+import validationData from "@/public/data/validation.json";
 
 export interface ExperimentRow {
   iter: number;
@@ -159,4 +161,67 @@ export function getCalibration(): CalibrationData {
 
 export function getResearch(): ResearchData {
   return researchData as ResearchData;
+}
+
+// ============================================================================
+// Selfsearch Data (LLM vs Market Study)
+// ============================================================================
+
+export interface SelfsearchSummary {
+  total_events: number;
+  noise_events: number;
+  clean_events: number;
+  llm_accuracy: number;
+  market_accuracy: number;
+  llm_outperformance: number;
+  avg_information_advantage_min: number | null;
+  positive_advantage_count: number;
+  positive_advantage_rate: number;
+}
+
+export interface SelfsearchCategory {
+  llm_accuracy: number;
+  market_accuracy: number;
+  count: number;
+  avg_advantage: number | null;
+}
+
+export interface SelfsearchEvent {
+  event_id: string;
+  category: string;
+  llm_prediction: string;
+  confidence: number;
+  llm_correct: boolean;
+  market_correct: boolean;
+  advantage_min: number | null;
+  is_noise: boolean;
+}
+
+export interface SelfsearchNoiseBreakdown {
+  low_confidence: number;
+  low_correlation: number;
+  low_volatility: number;
+  pure_random: number;
+}
+
+export interface SelfsearchData {
+  summary: SelfsearchSummary;
+  category_breakdown: Record<string, SelfsearchCategory>;
+  events: SelfsearchEvent[];
+  noise_breakdown: SelfsearchNoiseBreakdown;
+  generated_at: string;
+}
+
+export function getSelfsearch(): SelfsearchData {
+  return selfsearchData as SelfsearchData;
+}
+
+// ============================================================================
+// Validation Data (Parameter Transfer, Drift, Confidence Intervals)
+// ============================================================================
+
+export type { ValidationData } from "@/components/ValidationRisks";
+
+export function getValidation() {
+  return validationData as Record<string, unknown>;
 }

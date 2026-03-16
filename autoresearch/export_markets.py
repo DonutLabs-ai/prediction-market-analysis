@@ -43,8 +43,9 @@ def export_markets(
         SELECT
             id AS market_id,
             question,
+            COALESCE(description, '') AS market_description,
             volume,
-            NULL AS category,  -- category column not available in schema; derive later via resolve_category
+            category,
             TRIM(json_extract_string(clob_token_ids, '$[0]')) AS yes_token,
             CAST(json_extract_string(outcome_prices, '$[0]') AS DOUBLE) AS yes_final,
             end_date,
@@ -118,6 +119,7 @@ def export_markets(
     SELECT
         mt.market_id,
         mt.question,
+        mt.market_description,
         mt.category,
         mt.volume,
         ROUND(v.yes_vwap, 4) AS yes_price,
@@ -137,10 +139,12 @@ def export_markets(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as f:
         for _, row in df.iterrows():
+            api_category = None if pd.isna(row.get("category")) else str(row.get("category"))
+            description = str(row.get("market_description") or "")
             record = {
                 "market_id": str(row["market_id"]),
                 "question": row["question"],
-                "category": resolve_category(None if pd.isna(row.get("category")) else str(row.get("category")), row["question"]),
+                "category": resolve_category(api_category, row["question"], description),
                 "yes_price": float(row["yes_price"]),
                 "outcome": int(row["outcome"]),
                 "volume": round(float(row["volume"]), 2),

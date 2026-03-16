@@ -13,10 +13,11 @@ make lint                       # Check code style with ruff
 make format                     # Auto-format code with ruff
 make setup                      # Download and extract 36GiB dataset from Cloudflare R2
 
-# Selfsearch model development
-python -m selfsearch.prepare    # Prepare data splits
-python -m selfsearch.model val  # Run model on validation set
-python -m selfsearch.run_loop   # Evaluate iteration (keep/discard)
+# Strategy loop (Karpathy-style autoresearch)
+python -m strategyloop.prepare    # Prepare data splits
+python -m strategyloop.model val  # Run model on validation set
+python -m strategyloop.run_loop   # Evaluate iteration (keep/discard)
+python -m strategyloop.features   # Build time series features cache
 ```
 
 Run a single test file: `uv run pytest tests/test_analysis_run.py -v`
@@ -78,10 +79,16 @@ autoresearch/
   calibration_parameters.py  # Table 3 (slopes), Table 6 (intercepts)
   strategy.py / strategy_v2.py  # Trading signal generation
 selfsearch/
+  run_study.py    # LLM vs Market efficiency study orchestrator
+  llm_judge.py    # LLM judgment via OpenRouter
+  backtest.py     # Backtest LLM vs market reaction times
+  evaluate.py     # Composite scorer (accuracy + advantage + coverage)
+strategyloop/
   prepare.py      # Data prep, outcome hiding, evaluation, anti-cheat
-  model.py        # LLM-powered calibration model (modify this)
-  run_loop.py     # Iteration orchestrator (keep/discard logic)
-  gen_dashboard.py  # HTML dashboard generator
+  model.py        # Trading strategy model (modify this)
+  run_loop.py     # Keep/discard orchestrator with bootstrap CI
+  features.py     # Time series feature extractor (DuckDB on trades)
+  refresh.py      # Data + feature refresh pipeline
 dashboard/
   app/            # Next.js app router pages
   components/     # React components (ResearchOutcomes)

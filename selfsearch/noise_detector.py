@@ -72,18 +72,18 @@ class NoiseDetector:
                 f"LLM confidence {llm_conf:.1%} < threshold {self.llm_confidence_threshold:.0%}"
             )
 
-        # 2. 检查新闻相关性
+        # 2. 检查新闻相关性 (skip if no news provided — description-only mode)
         news_corr = self._compute_news_correlation(news_items, question)
         signals["news_correlation"] = news_corr
-        if news_corr < self.news_correlation_threshold:
+        if news_items and news_corr < self.news_correlation_threshold:
             noise_reasons.append(
                 f"News correlation {news_corr:.2f} < threshold {self.news_correlation_threshold}"
             )
 
-        # 3. 检查市场反应
+        # 3. 检查市场反应 (skip if no market data available)
         market_vol = self._compute_market_volatility(market_prices)
         signals["market_volatility"] = market_vol
-        if market_vol < self.market_volatility_threshold:
+        if market_prices and len(market_prices) >= 2 and market_vol < self.market_volatility_threshold:
             noise_reasons.append(
                 f"Market volatility {market_vol:.1%} < threshold {self.market_volatility_threshold:.0%}"
             )
@@ -194,23 +194,21 @@ class NoiseDetector:
         # 提取问题中的关键词
         import re
         question_words = set(
-            re.findall(r"\b[a-z]{4,}\b", question.lower())
+            re.findall(r"\b[a-z]{2,}\b", question.lower())
         )
 
-        # 计算新闻中与问题关键词的重叠
-        total_overlap = 0
-        total_words = 0
-        for item in news_items:
-            text = item.get("text", "").lower()
-            news_words = set(re.findall(r"\b[a-z]{4,}\b", text))
-            overlap = len(question_words & news_words)
-            total_overlap += overlap
-            total_words += len(news_words)
-
-        if total_words == 0:
+        if not question_words:
             return 0.0
 
-        return total_overlap / total_words
+        # Collect all news words into a single set to avoid double-counting
+        all_news_words: set[str] = set()
+        for item in news_items:
+            text = item.get("text", "").lower()
+            all_news_words.update(re.findall(r"\b[a-z]{2,}\b", text))
+
+        # Measure what fraction of question keywords appear in news
+        overlap = len(question_words & all_news_words)
+        return overlap / len(question_words)
 
     def _compute_market_volatility(
         self,
@@ -234,17 +232,19 @@ class NoiseDetector:
 
         question_lower = question.lower()
 
+        # Exclude political events early
+        if "next president" in question_lower:
+            return False
+
         random_keywords = [
             "coin flip", "coin toss", "heads or tails",
             "lottery", "raffle", "random draw",
             "dice roll", "card draw",
             "roulette", "slot machine",
-            "next president" not in question_lower,  # 排除政治事件
         ]
 
-        # 检查是否包含随机关键词
         for kw in random_keywords:
-            if isinstance(kw, str) and kw in question_lower:
+            if kw in question_lower:
                 return True
 
         return False

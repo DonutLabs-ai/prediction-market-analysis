@@ -23,8 +23,7 @@ if not OPENROUTER_API_KEY:
     load_dotenv(_dotenv_path)
     OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
-DEFAULT_MODEL = "anthropic/claude-haiku-4-5"  # 快速、便宜
-PRECISION_MODEL = "anthropic/claude-sonnet-4"  # 高准确率
+DEFAULT_MODEL = "openrouter/hunter-alpha"  # Free, 1T param reasoning model
 
 
 @dataclass
@@ -69,6 +68,8 @@ class LLMJudge:
         news_items: List[dict[str, Any]],
         category: Optional[str] = None,
         max_news: int = 10,
+        description: Optional[str] = None,
+        cutoff_time: Optional[str] = None,
     ) -> LLMJudgment:
         """基于新闻/SEC filings 判断事件结果.
 
@@ -78,11 +79,20 @@ class LLMJudge:
             news_items: 新闻列表，每项包含 {timestamp, source, text, url}
             category: 事件类别 (politics/crypto/finance/sports)
             max_news: 最多使用的新闻数量
+            description: 市场描述文本 (primary context for evaluation)
+            cutoff_time: ISO timestamp — only use news before this time
 
         Returns:
             LLMJudgment 结果
         """
         start_time = time.time()
+
+        # Filter news by cutoff_time if provided
+        if cutoff_time:
+            news_items = [
+                n for n in news_items
+                if n.get("timestamp", "") < cutoff_time
+            ]
 
         # 按时间排序新闻
         sorted_news = sorted(
@@ -91,7 +101,7 @@ class LLMJudge:
         )[:max_news]
 
         # 构建 prompt
-        prompt = self._build_prompt(question, sorted_news, category)
+        prompt = self._build_prompt(question, sorted_news, category, description, cutoff_time)
 
         # 调用 LLM
         response = self._call_llm(prompt)
@@ -100,7 +110,7 @@ class LLMJudge:
         processing_time = time.time() - start_time
 
         # 确定 news cutoff time
-        news_cutoff = sorted_news[-1].get("timestamp") if sorted_news else None
+        news_cutoff = cutoff_time or (sorted_news[-1].get("timestamp") if sorted_news else None)
 
         return LLMJudgment(
             event_id=event_id,
@@ -115,6 +125,7 @@ class LLMJudge:
                 "total_news_available": len(news_items),
                 "question": question,
                 "category": category,
+                "has_description": bool(description),
             },
         )
 
@@ -193,21 +204,30 @@ class LLMJudge:
         question: str,
         news_items: List[dict],
         category: Optional[str],
+        description: Optional[str] = None,
+        cutoff_time: Optional[str] = None,
     ) -> List[dict]:
         """构建 LLM prompt."""
 
+        cutoff_instruction = ""
+        if cutoff_time:
+            cutoff_instruction = f"\nIMPORTANT: You are predicting a FUTURE event. Base your analysis only on information available before {cutoff_time}. Do not assume you know the outcome."
+
         system_prompt = f"""You are an expert prediction market analyst.
-Your task is to analyze news articles and SEC filings to determine the likely outcome of a binary event.
+Your task is to predict the likely outcome of a binary event based on the market description and any available context.
 
 You will be given:
 1. A question about a future event (Yes/No outcome)
-2. A list of news articles/filings in chronological order
+2. A market description providing context about the event
+3. Optionally, news articles in chronological order
 
 Your analysis should:
-- Carefully read each news item
-- Consider the credibility of sources
-- Weight recent information more heavily
-- Identify any definitive announcements vs. speculation
+- Carefully analyze the market description and question
+- Consider base rates and domain knowledge
+- If news is provided, weight recent information more heavily
+- Distinguish definitive announcements from speculation
+- Consider what is likely vs. what is certain
+{cutoff_instruction}
 
 Respond with:
 1. Your prediction: "Yes", "No", or "Uncertain" (if insufficient information)
@@ -217,28 +237,37 @@ Respond with:
 Category: {category or "general"}
 """
 
+        # Build user prompt with description as primary context
+        parts = [f"Event Question: {question}"]
+
+        if description:
+            parts.append(f"\nMarket Description:\n{description[:3000]}")
+
         # 格式化新闻
-        news_text = []
-        for i, item in enumerate(news_items, 1):
-            news_text.append(
-                f"[{i}] {item.get('timestamp', 'Unknown')} - {item.get('source', 'Unknown')}\n"
-                f"    {item.get('text', '')[:1500]}\n"  # 限制每条新闻长度
+        if news_items:
+            news_text = []
+            for i, item in enumerate(news_items, 1):
+                news_text.append(
+                    f"[{i}] {item.get('timestamp', 'Unknown')} - {item.get('source', 'Unknown')}\n"
+                    f"    {item.get('text', '')[:1500]}\n"
+                )
+            parts.append(
+                f"\nRelated News/Announcements (in chronological order):\n"
+                f"{'-' * 60}\n"
+                f"{chr(10).join(news_text)}\n"
+                f"{'-' * 60}"
             )
 
-        user_prompt = f"""Event Question: {question}
+        parts.append(
+            "\nPlease provide your analysis in this exact JSON format:\n"
+            "{\n"
+            '    "prediction": "Yes" or "No" or "Uncertain",\n'
+            '    "confidence": 0.0-1.0,\n'
+            '    "reasoning": "your 2-3 sentence explanation"\n'
+            "}"
+        )
 
-Related News/Announcements (in chronological order):
-{'-' * 60}
-{chr(10).join(news_text)}
-{'-' * 60}
-
-Please provide your analysis in this exact JSON format:
-{{
-    "prediction": "Yes" or "No" or "Uncertain",
-    "confidence": 0.0-1.0,
-    "reasoning": "your 2-3 sentence explanation"
-}}
-"""
+        user_prompt = "\n".join(parts)
 
         return [
             {"role": "system", "content": system_prompt},
